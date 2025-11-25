@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+env/
+ENV/
+
+# Node
+node_modules/
+.next/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data and uploads
+backend/data/vector_store/
+backend/data/uploads/
+*.db
+*.sqlite
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+
+# Git
+.git/
+
+# Documentation - EXCLUDE ALL .md EXCEPT README.md
+*.md
+!README.md
+
+# Development and test files
+test_*.py
+*_test.py
+check_dependencies.py
+test_api.py
+load_documents.py
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# GitHub
+.github/workflows/

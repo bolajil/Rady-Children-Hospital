@@ -1,0 +1,135 @@
+# Sample Medical Knowledge Document
+
+## Asthma in Pediatric Patients
+
+### Overview
+Asthma is a chronic inflammatory disease of the airways that affects millions of children worldwide. It is characterized by recurrent episodes of wheezing, breathlessness, chest tightness, and coughing.
+
+### Pathophysiology
+Asthma involves:
+- Airway inflammation
+- Bronchial hyperresponsiveness
+- Variable airflow obstruction
+- Airway remodeling in severe cases
+
+### Symptoms
+**Common symptoms in children:**
+1. Persistent Coughing - especially at night or during exercise
+2. Wheezing - a whistling sound when breathing
+3. Shortness of Breath - difficulty breathing
+4. Chest Tightness - feeling of pressure in the chest
+5. Difficulty Breathing - particularly during physical activity
+6. Fatigue - due to poor sleep from nighttime symptoms
+
+**Red Flags (seek immediate care):**
+- Severe difficulty breathing
+- Blue lips or face
+- Rapid breathing
+- Inability to speak in full sentences
+- Chest retractions
+
+### Diagnosis
+Diagnostic criteria include:
+- Clinical history and physical examination
+- Spirometry (for children ≥5 years)
+- Peak flow measurements
+- Exercise challenge tests
+- Allergy testing
+
+### Treatment
+**Step-wise approach:**
+
+**Step 1 (Intermittent):**
+- Short-acting beta-agonist (SABA) as needed
+- Example: Albuterol inhaler
+
+**Step 2 (Mild Persistent):**
+- Low-dose inhaled corticosteroid (ICS)
+- Plus SABA as needed
+
+**Step 3 (Moderate Persistent):**
+- Low to medium-dose ICS + long-acting beta-agonist (LABA)
+- Or medium-dose ICS alone
+
+**Step 4 (Severe Persistent):**
+- Medium to high-dose ICS + LABA
+- Consider add-on therapy (leukotriene modifier, theophylline)
+
+### Triggers
+Common asthma triggers in children:
+- Respiratory infections (especially viral)
+- Allergens (dust mites, pets, pollen, mold)
+- Exercise
+- Cold air
+- Air pollution
+- Tobacco smoke
+- Strong emotions
+
+### Prevention
+**Environmental control:**
+- Reduce dust mites exposure
+- Avoid tobacco smoke
+- Control indoor humidity
+- Regular cleaning
+- Pet management if allergic
+
+### Medication Safety
+**Important considerations:**
+- Proper inhaler technique is crucial
+- Spacers recommended for young children
+- Regular follow-up to assess control
+- Written asthma action plan for all patients
+
+### Prognosis
+- Many children improve or outgrow asthma
+- Good control reduces long-term complications
+- Early intervention is key
+
+---
+
+## Common Pediatric Medications
+
+### Albuterol (Salbutamol)
+**Class:** Short-acting beta-2 agonist (SABA)
+
+**Indications:**
+- Acute asthma exacerbations
+- Exercise-induced bronchospasm
+- Wheezing
+
+**Pediatric Dosing:**
+- Inhaler (MDI): 2 puffs every 4-6 hours as needed
+- Nebulizer: 0.15 mg/kg (minimum 2.5 mg) every 20 minutes x 3 for severe exacerbation
+
+**Side Effects:**
+- Tachycardia
+- Tremor
+- Hyperactivity
+- Headache
+
+**Contraindications:**
+- Hypersensitivity to albuterol
+
+---
+
+## Clinical Guidelines Summary
+
+### American Academy of Pediatrics (AAP) Asthma Management
+
+**Control Assessment:**
+- Well-controlled: <2 days/week daytime symptoms, <2 nights/month nighttime awakening
+- Not well-controlled: >2 days/week symptoms
+- Very poorly controlled: Throughout the day symptoms
+
+**Step-Up Therapy Indications:**
+- Symptoms >2 days/week
+- Nighttime awakening >1x/month
+- Interference with normal activities
+- Exacerbations requiring oral corticosteroids ≥2x/year
+
+**Step-Down Therapy:**
+- Consider after 3 months of good control
+- Reduce dose by 25-50%
+- Continue monitoring
+
+This is a simplified reference document for demonstration purposes.

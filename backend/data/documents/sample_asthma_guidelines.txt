@@ -1,0 +1,77 @@
+Sample Medical Document for RAG Testing
+=========================================
+
+Pediatric Asthma Treatment Guidelines
+--------------------------------------
+
+Introduction
+------------
+Asthma is one of the most common chronic diseases in children. This document provides evidence-based guidelines for the treatment and management of pediatric asthma.
+
+Classification
+--------------
+Asthma severity is classified into four categories:
+1. Intermittent
+2. Mild Persistent
+3. Moderate Persistent
+4. Severe Persistent
+
+Treatment Approaches
+--------------------
+
+For Intermittent Asthma:
+- Short-acting beta-agonists (SABA) as needed
+- No daily controller medication required
+- Monitor symptoms and lung function
+
+For Mild Persistent Asthma:
+- Low-dose inhaled corticosteroids (ICS)
+- Alternative: Leukotriene receptor antagonist (LTRA)
+- SABA as rescue medication
+
+For Moderate Persistent Asthma:
+- Medium-dose ICS OR low-dose ICS + long-acting beta-agonist (LABA)
+- Consider adding LTRA
+- Regular follow-up every 3-6 months
+
+For Severe Persistent Asthma:
+- High-dose ICS + LABA
+- Consider oral corticosteroids if needed
+- Specialist referral recommended
+- Biologic therapies may be considered
+
+Emergency Management
+--------------------
+For acute exacerbations:
+1. Administer oxygen if SpO2 < 90%
+2. SABA via nebulizer or MDI with spacer
+3. Systemic corticosteroids (oral prednisolone or IV methylprednisolone)
+4. Monitor response and consider additional bronchodilators
+5. Admit if no improvement or severe symptoms
+
+Important Considerations for Children
+--------------------------------------
+- Growth monitoring is essential for children on long-term ICS
+- Proper inhaler technique must be taught and regularly assessed
+- Spacers should be used with MDIs for children under 5 years
+- Asthma action plans should be provided to all families
+- School notifications and emergency medications should be arranged
+
+Prevention and Environmental Control
+-------------------------------------
+- Identify and avoid triggers (allergens, irritants)
+- Ensure influenza vaccination annually
+- Consider allergen immunotherapy for specific sensitivities
+- Maintain smoke-free environment
+- Regular cleaning to reduce dust mites and mold
+
+Follow-up and Monitoring
+------------------------
+- Regular assessment of symptoms and lung function
+- Peak flow monitoring for children over 5 years
+- Medication adherence review
+- Inhaler technique check at each visit
+- Update asthma action plan as needed
+
+This is a sample document for testing the RAG (Retrieval-Augmented Generation) system.
+In production, real medical literature and clinical guidelines would be ingested.
