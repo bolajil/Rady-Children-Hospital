@@ -131,7 +131,9 @@ Visit http://localhost:8000/docs when running for full API documentation with "T
 ## 🚢 Deployment
 
 ### Deploy to DockerHub
-```bash
+
+**PowerShell:**
+```powershell
 # Login to DockerHub
 docker login
 
@@ -139,10 +141,27 @@ docker login
 .\deploy-dockerhub.ps1 v1.0.0
 ```
 
-### Deploy to GitHub
+**Git Bash:**
 ```bash
+# Login to DockerHub
+docker login
+
+# Run deployment script
+./deploy-dockerhub.sh v1.0.0
+```
+
+### Deploy to GitHub
+
+**PowerShell:**
+```powershell
 # Run deployment script
 .\deploy-github.ps1 https://github.com/bolajil/rady-genai.git
+```
+
+**Git Bash:**
+```bash
+# Run deployment script (use PowerShell for this script)
+powershell.exe -File ./deploy-github.ps1 https://github.com/bolajil/rady-genai.git
 ```
 
 ### Infrastructure Links
@@ -156,7 +175,9 @@ docker login
 ## 🧪 Testing
 
 ### Backend Testing
-```bash
+
+**PowerShell:**
+```powershell
 cd backend
 .\venv\Scripts\activate
 
@@ -170,10 +191,40 @@ python test_setup.py
 python test_api.py
 ```
 
-### Load Medical Documents
+**Git Bash:**
 ```bash
 cd backend
+source venv/Scripts/activate
+
+# Check dependencies
+python check_dependencies.py
+
+# Test setup
+python test_setup.py
+
+# Run API tests
+python test_api.py
+```
+
+### Load Medical Documents
+
+**PowerShell:**
+```powershell
+cd backend
 .\venv\Scripts\activate
+
+# Place documents in data/documents/
+# Then load them:
+python load_documents.py
+
+# Or watch for new files:
+python load_documents.py --watch
+```
+
+**Git Bash:**
+```bash
+cd backend
+source venv/Scripts/activate
 
 # Place documents in data/documents/
 # Then load them:
@@ -232,8 +283,8 @@ curl -X POST http://localhost:8000/chat \
 
 ### Local Development (No Docker)
 
-**Backend:**
-```bash
+**Backend (PowerShell):**
+```powershell
 cd backend
 python -m venv venv
 .\venv\Scripts\activate
@@ -241,7 +292,16 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-**Frontend:**
+**Backend (Git Bash):**
+```bash
+cd backend
+python -m venv venv
+source venv/Scripts/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+**Frontend (Both):**
 ```bash
 cd frontend
 npm install
