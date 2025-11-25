@@ -1,9 +1,5 @@
 # Rady Children's Health GenAI Agent
 
-A secure, HIPAA-compliant GenAI agent for healthcare applications built with FastAPI, LangChain, and Next.js.
-
-# Rady Children's Health GenAI Agent
-
 A secure, HIPAA-compliant GenAI agent for pediatric healthcare with RAG (Retrieval-Augmented Generation) capabilities, built with FastAPI, LangChain, and Next.js.
 
 ---
@@ -360,4 +356,5 @@ Proprietary - Rady Children's Health
 ---
 
 **Built with ❤️ for Rady Children's Health**
+
 
