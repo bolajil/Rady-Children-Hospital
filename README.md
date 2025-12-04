@@ -2,6 +2,8 @@
 
 A secure, HIPAA-compliant GenAI agent for pediatric healthcare with RAG (Retrieval-Augmented Generation) capabilities, built with FastAPI, LangChain, and Next.js.
 
+**Version:** v1.2.0
+
 ---
 
 ## 🚀 Quick Start
@@ -9,8 +11,8 @@ A secure, HIPAA-compliant GenAI agent for pediatric healthcare with RAG (Retriev
 ### Option 1: Pull from DockerHub (Easiest)
 ```bash
 # Pull pre-built images
-docker pull bolajil/rady-backend:latest
-docker pull bolajil/rady-frontend:latest
+docker pull bolajil/rady-backend:v1.2.0
+docker pull bolajil/rady-frontend:v1.2.0
 
 # Create .env file
 echo "OPENAI_API_KEY=your-key-here" > .env
@@ -20,9 +22,9 @@ docker-compose -f docker-compose.prod.yml up
 ```
 
 **Access:**
-- Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
 - Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Documentation (Swagger): http://localhost:8000/docs
 
 ### Option 2: Build Locally
 ```bash
@@ -59,6 +61,45 @@ rady-genai/
 ├── docker-compose.prod.yml # Production
 └── README.md
 ```
+
+---
+
+## ⚙️ Configuration
+
+### Environment variables
+- `OPENAI_API_KEY` (required) — backend uses this for model access.
+- Optional variables can be added to `backend/.env.example` and mirrored in your local `.env`.
+
+### Changing the “Call Clinic” phone button
+The green phone button shown in the sidebar dials **Rady Children's Hospital: 858-576-1700**.
+
+To change it:
+- Sidebar button: `frontend/app/components/Sidebar.tsx`
+  - Look for the anchor with `href="tel:+18585761700"` and update the number.
+- Reusable mobile button: `frontend/app/components/MobileCallButton.tsx`
+  - Pass `phoneNumber` and `label` props where used, or change the default values in the component.
+
+After editing, restart the frontend dev server for changes to reflect.
+
+---
+
+## 👤 Demo Login Credentials
+
+| Role | Email | Password | Access Level |
+|------|-------|----------|--------------|
+| **Owner (Admin)** | owner@example.com | ownerpass | Full access (Admin, EHR, Chat, Appointments) |
+| **Doctor** | doctor@example.com | doctorpass | EHR, Chat, Appointments |
+| **Patient (Emma)** | emma.parent@example.com | patient1 | Chat, Appointments only |
+| **Patient (Liam)** | liam.parent@example.com | patient2 | Chat, Appointments only |
+
+### Role-Based Access Control
+
+| Page | Owner | Doctor | Patient |
+|------|-------|--------|---------|
+| Admin Dashboard | ✅ | ❌ | ❌ |
+| Health Records (EHR) | ✅ | ✅ | ❌ |
+| Chat | ✅ | ✅ | ✅ |
+| Appointments | ✅ | ✅ | ✅ |
 
 ---
 
@@ -113,11 +154,59 @@ rady-genai/
 ## 📊 API Endpoints
 
 ### Core Endpoints
-- `GET /health` - Health check
-- `POST /chat` - Chat with AI agent
-- `POST /kb/search` - Search knowledge base
-- `GET /kb/stats` - Knowledge base statistics
-- `GET /kb/documents` - List uploaded documents
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| POST | `/chat` | Chat with AI agent |
+| POST | `/chat/stream` | Streaming chat (SSE) |
+| POST | `/feedback` | Submit feedback (thumbs up/down) |
+| GET | `/feedback` | Get all feedback |
+
+### EHR Endpoints (Requires Owner/Doctor role)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/ehr/patients` | Get all patients |
+| GET | `/ehr/patients/{id}` | Get specific patient |
+| GET | `/ehr/patients/search?q=` | Search patients |
+
+### Appointments Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/appointments` | Get all appointments |
+| GET | `/appointments/patient/{id}` | Get appointments for patient |
+
+### API Testing (JSON Bodies)
+
+**POST /chat:**
+```json
+{
+  "query": "What is the correct acetaminophen dose for a 25-pound toddler?",
+  "session_id": "demo-001"
+}
+```
+
+**POST /chat/stream:**
+```json
+{
+  "query": "What are the signs of an ear infection in toddlers?",
+  "session_id": "demo-001"
+}
+```
+
+**POST /feedback:**
+```json
+{
+  "conversation_id": "demo-001",
+  "message_index": 1,
+  "question": "What is the correct acetaminophen dose?",
+  "answer": "For a 25-pound toddler...",
+  "rating": "up",
+  "timestamp": "2024-12-03T10:00:00Z"
+}
+```
 
 ### Interactive Documentation
 Visit http://localhost:8000/docs when running for full API documentation with "Try it out" functionality.

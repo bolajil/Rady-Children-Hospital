@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+venv
+.env
+.env.local
+node_modules
+.next
+*.log
+.git
+.vscode
+.idea
+*.md
+!README.md
+backend/data/vector_store
+backend/data/uploads

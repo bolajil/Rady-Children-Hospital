@@ -105,6 +105,10 @@ if RAG_AVAILABLE and MedicalKnowledgeSearchTool:
 
 # Check for OpenAI API key
 api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize llm as None (will be set if API key is available)
+llm = None
+
 if not api_key:
     logger.warning("OPENAI_API_KEY not found in environment variables. Agent will use mock responses.")
     logger.info("Please set OPENAI_API_KEY in backend/.env file")
@@ -135,11 +139,13 @@ Available demo tools:
     
     agent_executor = MockAgentExecutor()
 else:
-    # Initialize LLM with GPT-4
+    # Initialize LLM with a fast, high-quality model
+    # gpt-4o-mini offers a strong quality:latency balance for demos
     llm = ChatOpenAI(
-        model="gpt-4-turbo-preview",
+        model="gpt-4o-mini",
         temperature=0,
-        api_key=api_key
+        api_key=api_key,
+        timeout=20,
     )
 
     # Create prompt template
@@ -169,6 +175,7 @@ Always prioritize patient safety and quality of care."""
         # New LangChain API
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_message),
+            MessagesPlaceholder(variable_name="chat_history", optional=True),
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
@@ -179,7 +186,7 @@ Always prioritize patient safety and quality of care."""
             tools=tools,
             verbose=True,
             handle_parsing_errors=True,
-            max_iterations=5,
+            max_iterations=3,
         )
     else:
         # Old LangChain API (fallback)
@@ -189,7 +196,7 @@ Always prioritize patient safety and quality of care."""
                 llm=llm,
                 agent=AgentType.OPENAI_FUNCTIONS,
                 verbose=True,
-                max_iterations=5,
+                max_iterations=3,
                 agent_kwargs={
                     "system_message": system_message,
                 }

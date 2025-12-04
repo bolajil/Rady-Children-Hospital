@@ -20,8 +20,11 @@ export default function Home() {
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [ratings, setRatings] = useState<Record<string, 'up' | 'down'>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const currentMessages = activeConversation
     ? conversations.find(c => c.id === activeConversation)?.messages || []
@@ -78,29 +81,73 @@ export default function Home() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: input }),
-      });
-
-      const data = await response.json();
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-      };
-
+      // Stream via /api/chat/stream for faster perceived latency
+      const convId = activeConversation;
+      // Prepare a placeholder assistant message we will incrementally update
       setConversations(prev => prev.map(conv => {
-        if (conv.id === activeConversation) {
+        if (conv.id === convId) {
           return {
             ...conv,
-            messages: [...conv.messages, assistantMessage],
+            messages: [...conv.messages, { role: 'assistant', content: '', timestamp: new Date() }],
             lastUpdated: new Date(),
           };
         }
         return conv;
       }));
+
+      const response = await fetch(`/api/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: input }),
+      });
+
+      if (!response.body) {
+        // Fallback to non-streaming endpoint if body is not readable (e.g., older browsers)
+        const fallback = await fetch(`/api/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: input }),
+        });
+        const data = await fallback.json();
+        setConversations(prev => prev.map(conv => {
+          if (conv.id === convId) {
+            const msgs = [...conv.messages];
+            // Replace the last (placeholder) assistant message content
+            const lastIdx = msgs.length - 1;
+            if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
+              msgs[lastIdx] = { ...msgs[lastIdx], content: data.response };
+            } else {
+              msgs.push({ role: 'assistant', content: data.response, timestamp: new Date() });
+            }
+            return { ...conv, messages: msgs, lastUpdated: new Date() };
+          }
+          return conv;
+        }));
+      } else {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let done = false;
+        while (!done) {
+          const { value, done: readerDone } = await reader.read();
+          done = readerDone;
+          const chunk = value ? decoder.decode(value, { stream: true }) : '';
+          if (chunk) {
+            setConversations(prev => prev.map(conv => {
+              if (conv.id === convId) {
+                const msgs = [...conv.messages];
+                const lastIdx = msgs.length - 1;
+                if (lastIdx >= 0 && msgs[lastIdx].role === 'assistant') {
+                  msgs[lastIdx] = { ...msgs[lastIdx], content: msgs[lastIdx].content + chunk };
+                } else {
+                  msgs.push({ role: 'assistant', content: chunk, timestamp: new Date() });
+                }
+                return { ...conv, messages: msgs, lastUpdated: new Date() };
+              }
+              return conv;
+            }));
+          }
+        }
+      }
     } catch (error) {
       console.error('Chat error:', error);
       const errorMessage: Message = {
@@ -119,197 +166,336 @@ export default function Home() {
     }
   };
 
+  const copyToClipboard = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(index);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const rateMessage = async (messageIndex: number, rating: 'up' | 'down') => {
+    const ratingKey = `${activeConversation}-${messageIndex}`;
+    const previousRating = ratings[ratingKey];
+    
+    // Toggle off if same rating clicked
+    if (previousRating === rating) {
+      setRatings(prev => {
+        const updated = { ...prev };
+        delete updated[ratingKey];
+        return updated;
+      });
+      return;
+    }
+    
+    // Update local state immediately
+    setRatings(prev => ({ ...prev, [ratingKey]: rating }));
+    
+    // Get the question (previous user message) and answer (current assistant message)
+    const conversation = conversations.find(c => c.id === activeConversation);
+    if (!conversation) return;
+    
+    const assistantMessage = conversation.messages[messageIndex];
+    const userMessage = conversation.messages[messageIndex - 1];
+    
+    // Send feedback to backend for LLM retraining
+    try {
+      await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: activeConversation,
+          message_index: messageIndex,
+          question: userMessage?.content || '',
+          answer: assistantMessage?.content || '',
+          rating: rating,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to submit feedback:', err);
+    }
+  };
+
   const quickActions = [
-    'Patient intake questionnaire',
-    'Medication interaction check',
-    'Clinical guideline lookup',
-    'HIPAA compliance query'
+    { icon: '📋', text: 'Patient intake form', query: 'Help me create a patient intake questionnaire' },
+    { icon: '💊', text: 'Check drug interactions', query: 'Check medication interactions for a patient' },
+    { icon: '📖', text: 'Clinical guidelines', query: 'What are the latest clinical guidelines for' },
+    { icon: '🔒', text: 'HIPAA compliance', query: 'What are the HIPAA compliance requirements for' },
+    { icon: '🩺', text: 'Symptom assessment', query: 'Help assess symptoms for a patient presenting with' },
+    { icon: '📅', text: 'Care plan', query: 'Create a care plan for a patient with' },
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-80' : 'w-0'} transition-all duration-300 bg-white border-r border-gray-200 flex flex-col overflow-hidden`}>
-        {/* Logo & Profile */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-              RC
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar - Slide in on mobile */}
+      <aside className={`
+        fixed md:relative inset-y-0 left-0 z-50 w-72 md:w-80 
+        transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-0 md:overflow-hidden'} 
+        transition-all duration-300 ease-in-out
+        bg-white border-r border-gray-200 flex flex-col shadow-xl md:shadow-none
+      `}>
+        {/* Header */}
+        <div className="p-4 md:p-5 border-b border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                RC
+              </div>
+              <div>
+                <h2 className="font-bold text-gray-900 text-sm">Rady Children's</h2>
+                <p className="text-xs text-gray-500">Medical AI</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-bold text-gray-900">Rady Children's</h2>
-              <p className="text-xs text-gray-500">GenAI Medical Assistant</p>
-            </div>
+            <button 
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
           <button
-            onClick={startNewConversation}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium flex items-center justify-center gap-2"
+            onClick={() => { startNewConversation(); setSidebarOpen(false); }}
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all font-medium flex items-center justify-center gap-2 shadow-lg min-h-[48px]"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New Conversation
+            New Chat
           </button>
         </div>
 
         {/* Conversation History */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">Recent Conversations</h3>
-          <div className="space-y-2">
-            {conversations.map(conv => (
-              <button
-                key={conv.id}
-                onClick={() => setActiveConversation(conv.id)}
-                className={`w-full text-left p-3 rounded-lg transition-all ${activeConversation === conv.id
-                    ? 'bg-blue-50 border border-blue-200'
-                    : 'hover:bg-gray-50 border border-transparent'
+        <div className="flex-1 overflow-y-auto p-3">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase px-2 mb-2">History</h3>
+          <div className="space-y-1">
+            {conversations.length === 0 ? (
+              <p className="text-sm text-gray-400 px-2 py-4 text-center">No conversations yet</p>
+            ) : (
+              conversations.map(conv => (
+                <button
+                  key={conv.id}
+                  onClick={() => { setActiveConversation(conv.id); setSidebarOpen(false); }}
+                  className={`w-full text-left p-3 rounded-xl transition-all min-h-[48px] ${
+                    activeConversation === conv.id
+                      ? 'bg-blue-50 border-l-4 border-blue-500'
+                      : 'hover:bg-gray-50'
                   }`}
-              >
-                <p className="font-medium text-sm text-gray-900 truncate">{conv.title}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {conv.messages.length} messages · {new Date(conv.lastUpdated).toLocaleDateString()}
-                </p>
-              </button>
-            ))}
+                >
+                  <p className="font-medium text-sm text-gray-800 truncate">{conv.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {conv.messages.length} msgs
+                  </p>
+                </button>
+              ))
+            )}
           </div>
         </div>
 
-        {/* HIPAA Compliance Badge */}
-        <div className="p-4 border-t border-gray-200 bg-green-50">
-          <div className="flex items-center gap-2 text-green-700">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Footer */}
+        <div className="p-3 border-t border-gray-100">
+          <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-xl">
+            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            <div>
-              <p className="text-xs font-semibold">HIPAA Compliant</p>
-              <p className="text-xs">End-to-end encrypted</p>
-            </div>
+            <span className="text-xs font-medium text-green-700">HIPAA Compliant</span>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Top Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 px-4 py-3 sticky top-0 z-30">
+          <div className="flex items-center justify-between max-w-4xl mx-auto">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Toggle menu"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Medical AI Assistant</h1>
-                <p className="text-sm text-gray-500">Powered by Advanced Language Models</p>
+              <div className="hidden sm:block">
+                <h1 className="text-lg font-bold text-gray-900">Medical AI Assistant</h1>
+              </div>
+              <div className="sm:hidden">
+                <h1 className="text-base font-bold text-gray-900">Rady AI</h1>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-full">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="text-xs font-medium text-green-700">System Online</span>
-              </div>
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-full">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-xs font-medium text-green-700 hidden sm:inline">Online</span>
             </div>
           </div>
         </header>
 
         {/* Chat Area */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto">
           {currentMessages.length === 0 ? (
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-12">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            /* Empty State */
+            <div className="h-full flex flex-col items-center justify-center p-4 md:p-8">
+              <div className="max-w-2xl w-full text-center">
+                {/* Welcome Icon */}
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  <svg className="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-3">Welcome to Rady Children's GenAI Assistant</h2>
-                <p className="text-lg text-gray-600 mb-8">Ask questions about patient care, medications, clinical guidelines, or HIPAA compliance</p>
-              </div>
+                
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">
+                  How can I help you today?
+                </h2>
+                <p className="text-gray-500 mb-8 text-sm md:text-base">
+                  Ask about patient care, medications, or clinical guidelines
+                </p>
 
-              {/* Quick Actions */}
-              <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
-                {quickActions.map((action, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setInput(action)}
-                    className="p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all text-left group"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
+                {/* Quick Actions - Responsive Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">
+                  {quickActions.map((action, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => { setInput(action.query); inputRef.current?.focus(); }}
+                      className="p-3 md:p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all text-left group min-h-[60px]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{action.icon}</span>
+                        <span className="text-xs md:text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors line-clamp-2">
+                          {action.text}
+                        </span>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">{action}</p>
-                      </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto space-y-6">
+            /* Messages */
+            <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
               {currentMessages.map((message, index) => (
                 <div
                   key={index}
-                  className={`flex gap-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
-                  {message.role === 'assistant' && (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {/* Avatar */}
+                  <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center shadow-md ${
+                    message.role === 'assistant' 
+                      ? 'bg-gradient-to-br from-blue-500 to-indigo-600' 
+                      : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                  }`}>
+                    {message.role === 'assistant' ? (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
-                    </div>
-                  )}
+                    ) : (
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    )}
+                  </div>
 
-                  <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                  {/* Message Bubble */}
+                  <div className={`flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'} max-w-[85%] md:max-w-[75%]`}>
                     <div
-                      className={`rounded-2xl px-5 py-3 shadow-sm ${message.role === 'user'
-                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
-                          : 'bg-white border border-gray-200 text-gray-900'
-                        }`}
+                      className={`rounded-2xl px-4 py-3 ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-md'
+                          : 'bg-white border border-gray-200 text-gray-800 rounded-bl-md shadow-sm'
+                      }`}
                     >
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                     </div>
-                    <span className="text-xs text-gray-400 mt-1.5 px-1">
-                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-
-                  {message.role === 'user' && (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
+                    
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 mt-1 px-1">
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {message.role === 'assistant' && message.content && (
+                        <>
+                          {/* Copy Button */}
+                          <button
+                            onClick={() => copyToClipboard(message.content, index)}
+                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                            title="Copy message"
+                          >
+                            {copiedId === index ? (
+                              <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            )}
+                          </button>
+                          
+                          {/* Rating Divider */}
+                          <span className="text-gray-300">|</span>
+                          
+                          {/* Thumbs Up */}
+                          <button
+                            onClick={() => rateMessage(index, 'up')}
+                            className={`p-1 rounded transition-colors ${
+                              ratings[`${activeConversation}-${index}`] === 'up'
+                                ? 'bg-green-100 text-green-600'
+                                : 'hover:bg-gray-100 text-gray-400 hover:text-green-500'
+                            }`}
+                            title="Good response"
+                          >
+                            <svg className="w-3.5 h-3.5" fill={ratings[`${activeConversation}-${index}`] === 'up' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                            </svg>
+                          </button>
+                          
+                          {/* Thumbs Down */}
+                          <button
+                            onClick={() => rateMessage(index, 'down')}
+                            className={`p-1 rounded transition-colors ${
+                              ratings[`${activeConversation}-${index}`] === 'down'
+                                ? 'bg-red-100 text-red-600'
+                                : 'hover:bg-gray-100 text-gray-400 hover:text-red-500'
+                            }`}
+                            title="Poor response"
+                          >
+                            <svg className="w-3.5 h-3.5" fill={ratings[`${activeConversation}-${index}`] === 'down' ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
+                            </svg>
+                          </button>
+                        </>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               ))}
 
+              {/* Loading */}
               {loading && (
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                    <svg className="w-6 h-6 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
+                    <svg className="w-4 h-4 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
                   </div>
-                  <div className="bg-white border border-gray-200 rounded-2xl px-5 py-3 shadow-sm">
-                    <div className="flex items-center gap-2">
+                  <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <span className="text-sm text-gray-500 ml-2">Analyzing...</span>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
                     </div>
                   </div>
                 </div>
@@ -320,11 +506,12 @@ export default function Home() {
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 bg-white px-6 py-4">
-          <form onSubmit={sendMessage} className="max-w-4xl mx-auto">
-            <div className="flex gap-3 items-end">
-              <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+        <div className="border-t border-gray-200/50 bg-white/80 backdrop-blur-lg px-4 py-3 sticky bottom-0">
+          <form onSubmit={sendMessage} className="max-w-3xl mx-auto">
+            <div className="flex gap-2 items-end">
+              <div className="flex-1 bg-gray-100 rounded-2xl border border-gray-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md transition-all">
                 <textarea
+                  ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -333,8 +520,8 @@ export default function Home() {
                       sendMessage(e);
                     }
                   }}
-                  placeholder="Type your message... (Shift+Enter for new line)"
-                  className="w-full px-5 py-4 bg-transparent resize-none focus:outline-none text-gray-900 placeholder-gray-400"
+                  placeholder="Ask me anything..."
+                  className="w-full px-4 py-3 bg-transparent resize-none focus:outline-none text-gray-900 placeholder-gray-400 text-base min-h-[48px] max-h-32"
                   rows={1}
                   disabled={loading}
                 />
@@ -342,16 +529,20 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-2xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl min-h-[48px] min-w-[48px] flex items-center justify-center"
+                aria-label="Send message"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                Send
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                )}
               </button>
             </div>
-            <p className="text-xs text-gray-400 mt-2 text-center">
-              All conversations are HIPAA compliant and encrypted end-to-end
+            <p className="text-[10px] text-gray-400 mt-2 text-center">
+              HIPAA compliant · End-to-end encrypted
             </p>
           </form>
         </div>

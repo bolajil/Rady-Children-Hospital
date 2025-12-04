@@ -10,6 +10,9 @@ services:
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONUNBUFFERED=1
+      - MEMORY_TYPE=${MEMORY_TYPE:-buffer}
+      - REDIS_URL=redis://redis:6379
+      - SESSION_TIMEOUT=${SESSION_TIMEOUT:-3600}
     volumes:
       - ./backend:/app
       - backend_data:/app/data
@@ -20,6 +23,24 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - rady-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - rady-network
 
@@ -45,6 +66,8 @@ services:
 
 volumes:
   backend_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:
