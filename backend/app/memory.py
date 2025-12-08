@@ -1,127 +1,90 @@
 """
 Conversation Memory Manager for Rady GenAI Agent
 
-Provides multiple memory backends for maintaining conversation context:
-- Buffer: Simple in-memory storage for short conversations
-- Summary: Summarizes older messages for long conversations
-- Redis: Persistent storage across server restarts
+Simple in-memory storage for conversation history.
 """
 
-import os
 import logging
-from typing import Optional, Dict
-from datetime import datetime, timedelta
+from typing import Optional, Dict, List
+from datetime import datetime
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-# Try to import memory components
-try:
-    from langchain_community.chat_message_histories import RedisChatMessageHistory
-    from langchain.memory import ConversationBufferMemory, ConversationSummaryMemory
-    from langchain_openai import ChatOpenAI
-    MEMORY_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"Memory components not available: {e}")
-    MEMORY_AVAILABLE = False
+MEMORY_AVAILABLE = True  # Always available with simple storage
+
+
+@dataclass
+class SimpleMessage:
+    """Simple message class"""
+    type: str  # 'human' or 'ai'
+    content: str
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
+
+
+class SimpleMemory:
+    """Simple in-memory conversation buffer"""
+    def __init__(self):
+        self.messages: List[SimpleMessage] = []
+    
+    def save_context(self, inputs: dict, outputs: dict):
+        """Save a conversation turn"""
+        if "input" in inputs:
+            self.messages.append(SimpleMessage(type="human", content=inputs["input"]))
+        if "output" in outputs:
+            self.messages.append(SimpleMessage(type="ai", content=outputs["output"]))
+    
+    def get_messages(self) -> List[SimpleMessage]:
+        return self.messages
+    
+    def clear(self):
+        self.messages = []
 
 
 class MemoryManager:
     """
-    Manages conversation memory across different backends.
+    Manages conversation memory with simple in-memory storage.
     """
     
-    def __init__(
-        self,
-        memory_type: str = "buffer",
-        redis_url: Optional[str] = None,
-        session_timeout: int = 3600,
-        llm: Optional[any] = None
-    ):
-        """
-        Initialize memory manager.
-        
-        Args:
-            memory_type: Type of memory ('buffer', 'summary', or 'redis')
-            redis_url: Redis connection URL (required for redis type)
-            session_timeout: Session timeout in seconds
-            llm: Language model for summary memory
-        """
-        self.memory_type = memory_type.lower()
-        self.redis_url = redis_url
-        self.session_timeout = session_timeout
-        self.llm = llm
-        
-        # In-memory session store
-        self._sessions: Dict[str, any] = {}
-        self._session_timestamps: Dict[str, datetime] = {}
-        
-        logger.info(f"MemoryManager initialized with type: {self.memory_type}")
+    def __init__(self, **kwargs):
+        """Initialize memory manager."""
+        self._sessions: Dict[str, SimpleMemory] = {}
+        logger.info("MemoryManager initialized with simple storage")
     
-    def get_memory(self, session_id: str = "default") -> Optional[any]:
-        """
-        Get or create memory for a session.
-        
-        Args:
-            session_id: Unique session identifier
-            
-        Returns:
-            Memory object for the session
-        """
-        if not MEMORY_AVAILABLE:
-            logger.warning("Memory components not available, returning None")
-            return None
-        
-        # Clean up expired sessions
-        self._cleanup_expired_sessions()
-        
-        # Check if session exists
+    def get_memory(self, session_id: str = "default") -> SimpleMemory:
+        """Get or create memory for a session."""
+        if session_id not in self._sessions:
+            self._sessions[session_id] = SimpleMemory()
+            logger.info(f"Created new memory for session: {session_id}")
+        return self._sessions[session_id]
+    
+    def get_conversation_history(self, session_id: str) -> List[SimpleMessage]:
+        """Get conversation history for a session."""
+        if session_id not in self._sessions:
+            return []
+        return self._sessions[session_id].get_messages()
+    
+    def list_sessions(self) -> List[str]:
+        """List all active sessions."""
+        return list(self._sessions.keys())
+    
+    def clear_session(self, session_id: str) -> bool:
+        """Clear a session's memory."""
         if session_id in self._sessions:
-            self._session_timestamps[session_id] = datetime.now()
-            return self._sessions[session_id]
-        
-        # Create new memory based on type
-        memory = self._create_memory(session_id)
-        
-        if memory:
-            self._sessions[session_id] = memory
-            self._session_timestamps[session_id] = datetime.now()
-            logger.info(f"Created new {self.memory_type} memory for session: {session_id}")
-        
-        return memory
+            self._sessions[session_id].clear()
+            return True
+        return False
     
-    def _create_memory(self, session_id: str) -> Optional[any]:
-        """Create memory based on configured type."""
-        try:
-            if self.memory_type == "redis":
-                return self._create_redis_memory(session_id)
-            elif self.memory_type == "summary":
-                return self._create_summary_memory(session_id)
-            else:  # Default to buffer
-                return self._create_buffer_memory(session_id)
-        except Exception as e:
-            logger.error(f"Failed to create {self.memory_type} memory: {e}")
-            # Fallback to buffer memory
-            logger.info("Falling back to buffer memory")
-            return self._create_buffer_memory(session_id)
-    
-    def _create_buffer_memory(self, session_id: str) -> any:
-        """Create simple buffer memory."""
-        return ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=True,
-            output_key="output",
-            input_key="input"
-        )
-    
-    def _create_summary_memory(self, session_id: str) -> any:
-        """Create summary-based memory."""
-        if not self.llm:
-            logger.warning("No LLM provided for summary memory, using buffer instead")
-            return self._create_buffer_memory(session_id)
-        
-        return ConversationSummaryMemory(
-            llm=self.llm,
-            memory_key="chat_history",
+    def delete_session(self, session_id: str) -> bool:
+        """Delete a session entirely."""
+        if session_id in self._sessions:
+            del self._sessions[session_id]
+            return True
+        return False
             return_messages=True,
             output_key="output",
             input_key="input"

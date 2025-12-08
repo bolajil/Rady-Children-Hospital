@@ -39,11 +39,18 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer_scheme
         raise HTTPException(status_code=401, detail="Token not yet valid")
 
     try:
+        # Parse role - handle both string and enum
+        role_value = payload.get("role", "patient")
+        if isinstance(role_value, str):
+            role = Role(role_value)
+        else:
+            role = role_value
+        
         return CurrentUser(
             id=payload.get("sub", ""),
             email=payload.get("email", ""),
             full_name=payload.get("full_name", ""),
-            role=payload.get("role", Role.patient),
+            role=role,
             patient_id=payload.get("patient_id"),
         )
     except Exception:
@@ -52,7 +59,11 @@ def get_current_user(creds: HTTPAuthorizationCredentials = Depends(bearer_scheme
 
 def require_roles(*allowed: Role):
     def _checker(user: CurrentUser = Depends(get_current_user)) -> CurrentUser:
-        if user.role not in allowed:
+        # Simple string comparison for reliability
+        user_role_str = str(user.role.value) if hasattr(user.role, 'value') else str(user.role)
+        allowed_strs = [str(r.value) if hasattr(r, 'value') else str(r) for r in allowed]
+        
+        if user_role_str not in allowed_strs:
             raise HTTPException(status_code=403, detail="Forbidden: insufficient role")
         return user
     return _checker

@@ -15,16 +15,47 @@ interface Conversation {
   lastUpdated: Date;
 }
 
+interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  role: 'owner' | 'doctor' | 'patient';
+  patient_id?: string;
+}
+
 export default function Home() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<string | null>(null);
   const [input, setInput] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [ratings, setRatings] = useState<Record<string, 'up' | 'down'>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fetch current user on mount
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.user) {
+          setUser(data.user);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setUserLoading(false));
+  }, []);
+
+  // Generate session_id - use patient_id for patients so doctors can view their chats
+  const getSessionId = () => {
+    if (user?.role === 'patient' && user?.patient_id) {
+      return `patient_${user.patient_id}`;
+    }
+    return activeConversation || 'default';
+  };
 
   const currentMessages = activeConversation
     ? conversations.find(c => c.id === activeConversation)?.messages || []
@@ -98,7 +129,7 @@ export default function Home() {
       const response = await fetch(`/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: input }),
+        body: JSON.stringify({ query: input, session_id: getSessionId() }),
       });
 
       if (!response.body) {
@@ -106,7 +137,7 @@ export default function Home() {
         const fallback = await fetch(`/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: input }),
+          body: JSON.stringify({ query: input, session_id: getSessionId() }),
         });
         const data = await fallback.json();
         setConversations(prev => prev.map(conv => {

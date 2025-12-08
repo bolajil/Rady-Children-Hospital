@@ -18,15 +18,12 @@ except ImportError:
 
 from app.agent import agent_executor, llm
 
-# Initialize memory manager
-try:
-    from app.memory import create_memory_manager
-    memory_manager = create_memory_manager(llm=llm if llm is not None else None)
-    MEMORY_AVAILABLE = True
-except Exception as e:
-    MEMORY_AVAILABLE = False
-    memory_manager = None
-    print(f"Memory manager not available: {e}")
+# Initialize memory manager (using simple storage)
+from app.memory_simple import create_memory_manager, MEMORY_AVAILABLE
+from app.memory_instance import set_memory_manager
+memory_manager = create_memory_manager()
+set_memory_manager(memory_manager, True)
+print("Memory manager initialized successfully")
 
 # Try to import vector store - it's optional
 try:
@@ -43,6 +40,14 @@ try:
     AUTH_ROUTER_AVAILABLE = True
 except Exception:
     AUTH_ROUTER_AVAILABLE = False
+
+# Compliance/Audit router
+try:
+    from app.routers import compliance
+    COMPLIANCE_ROUTER_AVAILABLE = True
+except Exception as e:
+    COMPLIANCE_ROUTER_AVAILABLE = False
+    print(f"Compliance router not available: {e}")
 
 app = FastAPI(title="Rady Children's GenAI Agent")
 
@@ -163,6 +168,8 @@ if AUTH_ROUTER_AVAILABLE:
     app.include_router(auth.router)
 app.include_router(ehr.router)
 app.include_router(appointments.router)
+if COMPLIANCE_ROUTER_AVAILABLE:
+    app.include_router(compliance.router)
 
 # Chat endpoint
 @app.post("/chat", response_model=ChatResponse)

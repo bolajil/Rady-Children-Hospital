@@ -42,6 +42,13 @@ const APPOINTMENT_TYPES = [
     'Consultation',
 ];
 
+interface User {
+    id: string;
+    full_name: string;
+    role: 'owner' | 'doctor' | 'patient';
+    patient_id?: string;
+}
+
 const emptyForm: NewAppointmentForm = {
     patient_id: '',
     patient_name: '',
@@ -56,6 +63,7 @@ const emptyForm: NewAppointmentForm = {
 
 export default function AppointmentsPage() {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
@@ -68,8 +76,17 @@ export default function AppointmentsPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
+    // Fetch current user on mount
     useEffect(() => {
-        fetchAppointments();
+        fetch('/api/auth/me')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data?.user) {
+                    setUser(data.user);
+                }
+            })
+            .catch(() => {})
+            .finally(() => fetchAppointments());
     }, []);
 
     const fetchAppointments = async () => {
@@ -167,7 +184,26 @@ export default function AppointmentsPage() {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const dateStr = tomorrow.toISOString().split('T')[0];
-        setFormData({ ...emptyForm, date: dateStr });
+        
+        // Pre-fill patient info if user is a patient
+        if (user?.role === 'patient' && user?.patient_id) {
+            // Get patient name - remove "Parent" suffix from user's name
+            // E.g., "Emma Johnson Parent" -> "Emma Johnson"
+            const patientName = user.full_name?.replace(' Parent', '') || '';
+            
+            // Also try to get name from existing appointments
+            const existingApt = appointments.find(a => a.patient_id === user.patient_id);
+            const name = existingApt?.patient_name || patientName || `Patient ${user.patient_id}`;
+            
+            setFormData({ 
+                ...emptyForm, 
+                date: dateStr,
+                patient_id: user.patient_id,
+                patient_name: name,
+            });
+        } else {
+            setFormData({ ...emptyForm, date: dateStr });
+        }
         setSubmitError('');
         setShowModal(true);
     };
@@ -200,9 +236,17 @@ export default function AppointmentsPage() {
         }
     };
 
-    const filteredAppointments = appointments.filter(apt =>
-        filterStatus === 'all' || apt.status === filterStatus
-    );
+    // Filter appointments - patients only see their own appointments
+    const filteredAppointments = appointments.filter(apt => {
+        // First filter by patient if user is a patient
+        if (user?.role === 'patient' && user?.patient_id) {
+            if (apt.patient_id !== user.patient_id) {
+                return false;
+            }
+        }
+        // Then filter by status
+        return filterStatus === 'all' || apt.status === filterStatus;
+    });
 
     const groupedAppointments = filteredAppointments.reduce((groups, apt) => {
         const date = new Date(apt.date).toLocaleDateString();
@@ -219,8 +263,12 @@ export default function AppointmentsPage() {
                 {/* Header - stacked on mobile */}
                 <div className="mb-6 md:mb-8 flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">Appointments</h1>
-                        <p className="text-sm md:text-base text-gray-600">Manage patient appointments and schedules</p>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 md:mb-2">
+                            {user?.role === 'patient' ? 'My Appointments' : 'Appointments'}
+                        </h1>
+                        <p className="text-sm md:text-base text-gray-600">
+                            {user?.role === 'patient' ? 'View your scheduled appointments' : 'Manage patient appointments and schedules'}
+                        </p>
                     </div>
                     <button
                         onClick={openNewAppointmentModal}
@@ -229,7 +277,7 @@ export default function AppointmentsPage() {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        New Appointment
+                        {user?.role === 'patient' ? 'Request Appointment' : 'New Appointment'}
                     </button>
                 </div>
 
@@ -335,20 +383,22 @@ export default function AppointmentsPage() {
                                                     )}
                                                 </div>
 
-                                                {/* Actions */}
-                                                <div className="flex flex-col gap-2 ml-4">
-                                                    <button
-                                                        onClick={() => handleEdit(apt)}
-                                                        className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    {apt.status === 'scheduled' && (
-                                                        <button className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
-                                                            Confirm
+                                                {/* Actions - only for doctors/owners */}
+                                                {user?.role !== 'patient' && (
+                                                    <div className="flex flex-col gap-2 ml-4">
+                                                        <button
+                                                            onClick={() => handleEdit(apt)}
+                                                            className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
+                                                        >
+                                                            Edit
                                                         </button>
-                                                    )}
-                                                </div>
+                                                        {apt.status === 'scheduled' && (
+                                                            <button className="px-4 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
+                                                                Confirm
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </motion.div>
                                     ))}
@@ -389,7 +439,9 @@ export default function AppointmentsPage() {
                         >
                             {/* Modal Header */}
                             <div className="sticky top-0 bg-white px-4 md:px-6 py-4 border-b border-gray-200 flex justify-between items-center z-10">
-                                <h2 className="text-lg md:text-xl font-bold text-gray-900">Schedule New Appointment</h2>
+                                <h2 className="text-lg md:text-xl font-bold text-gray-900">
+                                    {user?.role === 'patient' ? 'Request an Appointment' : 'Schedule New Appointment'}
+                                </h2>
                                 <button
                                     onClick={() => setShowModal(false)}
                                     className="p-2 -mr-2 text-gray-400 hover:text-gray-600 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -408,37 +460,44 @@ export default function AppointmentsPage() {
                                     </div>
                                 )}
 
-                                {/* Patient Info */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Patient ID <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="patient_id"
-                                            value={formData.patient_id}
-                                            onChange={handleInputChange}
-                                            required
-                                            placeholder="e.g., P001"
-                                            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                        />
+                                {/* Patient Info - read-only for patients */}
+                                {user?.role === 'patient' ? (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                        <p className="text-sm text-blue-800 font-medium">Requesting appointment for:</p>
+                                        <p className="text-lg font-bold text-blue-900">{formData.patient_name}</p>
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Patient Name <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="patient_name"
-                                            value={formData.patient_name}
-                                            onChange={handleInputChange}
-                                            required
-                                            placeholder="Full name"
-                                            className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                                        />
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Patient ID <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="patient_id"
+                                                value={formData.patient_id}
+                                                onChange={handleInputChange}
+                                                required
+                                                placeholder="e.g., P001"
+                                                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Patient Name <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="patient_name"
+                                                value={formData.patient_name}
+                                                onChange={handleInputChange}
+                                                required
+                                                placeholder="Full name"
+                                                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 {/* Provider and Type */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">

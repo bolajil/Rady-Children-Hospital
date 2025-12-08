@@ -51,6 +51,20 @@ interface HealthRecord {
     }>;
 }
 
+interface ChatMessage {
+    type: 'human' | 'ai' | 'unknown';
+    content: string;
+    timestamp?: string;
+}
+
+interface ChatHistory {
+    patient_id: string;
+    patient_name?: string;
+    messages: ChatMessage[];
+    total: number;
+    note?: string;
+}
+
 export default function PatientDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -58,6 +72,8 @@ export default function PatientDetailPage() {
 
     const [patient, setPatient] = useState<Patient | null>(null);
     const [healthRecord, setHealthRecord] = useState<HealthRecord | null>(null);
+    const [chatHistory, setChatHistory] = useState<ChatHistory | null>(null);
+    const [chatLoading, setChatLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
@@ -65,6 +81,28 @@ export default function PatientDetailPage() {
     useEffect(() => {
         fetchPatientData();
     }, [patientId]);
+
+    // Fetch chat history when switching to AI Chat tab
+    useEffect(() => {
+        if (activeTab === 'ai-chat' && !chatHistory && !chatLoading) {
+            fetchChatHistory();
+        }
+    }, [activeTab]);
+
+    const fetchChatHistory = async () => {
+        setChatLoading(true);
+        try {
+            const res = await fetch(`/api/ehr/patients/${patientId}/chat-history`);
+            if (res.ok) {
+                const data = await res.json();
+                setChatHistory(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch chat history:', err);
+        } finally {
+            setChatLoading(false);
+        }
+    };
 
     const fetchPatientData = async () => {
         try {
@@ -121,6 +159,7 @@ export default function PatientDetailPage() {
         { id: 'vitals', name: 'Vitals', icon: '💓' },
         { id: 'medications', name: 'Medications', icon: '💊' },
         { id: 'history', name: 'History', icon: '📋' },
+        { id: 'ai-chat', name: 'AI Chat History', icon: '💬' },
     ];
 
     return (
@@ -330,6 +369,72 @@ export default function PatientDetailPage() {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* AI Chat History Tab */}
+                        {activeTab === 'ai-chat' && (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-gray-900">Patient's AI Chat History</h3>
+                                    <button
+                                        onClick={fetchChatHistory}
+                                        className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        Refresh
+                                    </button>
+                                </div>
+                                
+                                <p className="text-sm text-gray-500 mb-4">
+                                    View questions this patient has asked the AI assistant. This helps you understand their concerns and prepare for consultations.
+                                </p>
+
+                                {chatLoading ? (
+                                    <div className="flex items-center justify-center py-12">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                    </div>
+                                ) : chatHistory?.note ? (
+                                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
+                                        {chatHistory.note}
+                                    </div>
+                                ) : chatHistory ? (
+                                    <div>
+                                        {chatHistory.messages.length > 0 ? (
+                                            <div className="space-y-3">
+                                                {chatHistory.messages.map((msg, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className={`rounded-lg p-4 ${
+                                                            msg.type === 'human'
+                                                                ? 'bg-blue-50 border-l-4 border-blue-500'
+                                                                : 'bg-gray-50 border-l-4 border-gray-300'
+                                                        }`}
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className={`text-xs font-semibold uppercase ${
+                                                                msg.type === 'human' ? 'text-blue-600' : 'text-gray-500'
+                                                            }`}>
+                                                                {msg.type === 'human' ? '🧑 Patient Question' : '🤖 AI Response'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-gray-800 text-sm whitespace-pre-wrap">{msg.content}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-12 text-gray-500">
+                                                <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                                </svg>
+                                                <p className="font-medium">No chat history found</p>
+                                                <p className="text-sm mt-1">This patient hasn't used the AI assistant yet.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : null}
                             </div>
                         )}
                     </div>

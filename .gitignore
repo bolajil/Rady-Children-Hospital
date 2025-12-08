@@ -53,9 +53,8 @@ coverage/
 # Git
 .git/
 
-# Documentation - EXCLUDE ALL .md EXCEPT README.md
-*.md
-!README.md
+# Documentation - Allow important docs
+# Removed: *.md exclusion to allow documentation files
 
 # Development and test files
 test_*.py

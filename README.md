@@ -97,6 +97,7 @@ After editing, restart the frontend dev server for changes to reflect.
 | Page | Owner | Doctor | Patient |
 |------|-------|--------|---------|
 | Admin Dashboard | ✅ | ❌ | ❌ |
+| HIPAA Compliance | ✅ | ❌ | ❌ |
 | Health Records (EHR) | ✅ | ✅ | ❌ |
 | Chat | ✅ | ✅ | ✅ |
 | Appointments | ✅ | ✅ | ✅ |
@@ -124,6 +125,12 @@ After editing, restart the frontend dev server for changes to reflect.
 - ✅ Audit logging for all patient data access
 - ✅ Environment-based secrets management
 - ✅ HIPAA compliance considerations
+
+### HIPAA Compliance Dashboard (Admin Only)
+- **Audit Logging** - All PHI access tracked with timestamps
+- **Violation Detection** - Automatic flagging of suspicious activity
+- **Real-time Monitoring** - View access events as they happen
+- **Severity Classification** - Critical, High, Medium, Low
 
 ---
 
@@ -427,6 +434,263 @@ This project is for Rady Children's Health. For contributions:
 
 ---
 
+## 🏥 HIPAA Compliance Implementation
+
+### Current Implementation (Demo/Development)
+
+The application includes a HIPAA compliance system with:
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| Audit Logger | `backend/app/audit.py` | Tracks all PHI access events |
+| Compliance API | `backend/app/routers/compliance.py` | Admin endpoints for audit data |
+| Compliance Dashboard | `frontend/app/compliance/page.tsx` | Visual dashboard for admins |
+
+### Violation Detection (Automatic)
+
+| Violation Type | Severity | Trigger |
+|----------------|----------|---------|
+| Unauthorized Access | HIGH | Invalid credentials or permissions |
+| After-Hours Access | LOW | PHI access outside 7 AM - 7 PM |
+| Bulk Data Access | HIGH | Accessing 10+ patients in 10 minutes |
+| Excessive Queries | MEDIUM | More than 20 accesses per hour |
+| Cross-Patient Access | CRITICAL | Patient viewing another patient's data |
+
+### Testing the Compliance Dashboard
+
+1. Login as **owner** (`owner@example.com` / `ownerpass`)
+2. Click **"HIPAA Compliance"** in sidebar
+3. Click **"Generate Sample Events (Demo)"** to create test violations
+4. View violations by severity and full audit log
+
+---
+
+## 🚀 Production Deployment Guide
+
+### Step 1: Database Setup (Replace In-Memory Storage)
+
+**PostgreSQL Schema for Audit Logs:**
+
+```sql
+-- Create audit log table (append-only, no updates/deletes)
+CREATE TABLE hipaa_audit_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    event_type VARCHAR(50) NOT NULL,
+    user_id VARCHAR(100) NOT NULL,
+    user_email VARCHAR(255) NOT NULL,
+    user_role VARCHAR(50) NOT NULL,
+    resource_type VARCHAR(100) NOT NULL,
+    resource_id VARCHAR(100),
+    patient_id VARCHAR(100),
+    ip_address INET,
+    details JSONB,
+    is_violation BOOLEAN DEFAULT FALSE,
+    violation_severity VARCHAR(20),
+    violation_reason TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create indexes for fast queries
+CREATE INDEX idx_audit_timestamp ON hipaa_audit_log(timestamp DESC);
+CREATE INDEX idx_audit_user ON hipaa_audit_log(user_id);
+CREATE INDEX idx_audit_patient ON hipaa_audit_log(patient_id);
+CREATE INDEX idx_audit_violations ON hipaa_audit_log(is_violation) WHERE is_violation = TRUE;
+
+-- Prevent modifications (trigger to block UPDATE/DELETE)
+CREATE OR REPLACE FUNCTION prevent_audit_modification()
+RETURNS TRIGGER AS $$
+BEGIN
+    RAISE EXCEPTION 'HIPAA audit logs cannot be modified or deleted';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER no_audit_updates
+    BEFORE UPDATE OR DELETE ON hipaa_audit_log
+    FOR EACH ROW EXECUTE FUNCTION prevent_audit_modification();
+
+-- Partition by month for performance (optional)
+-- CREATE TABLE hipaa_audit_log_2024_12 PARTITION OF hipaa_audit_log
+--     FOR VALUES FROM ('2024-12-01') TO ('2025-01-01');
+```
+
+### Step 2: Environment Configuration
+
+**Production `.env` file:**
+
+```env
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/rady_db
+
+# OpenAI
+OPENAI_API_KEY=sk-your-production-key
+
+# Security
+JWT_SECRET=your-secure-random-string-min-32-chars
+JWT_EXPIRY_HOURS=8
+
+# HIPAA Compliance
+HIPAA_AUDIT_ENABLED=true
+HIPAA_LOG_RETENTION_YEARS=6
+HIPAA_ALERT_EMAIL=compliance@radychildrens.org
+
+# Alerting (Optional)
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASSWORD=your-sendgrid-api-key
+ALERT_EMAIL_FROM=noreply@radychildrens.org
+
+# Cloud Provider (choose one)
+AWS_REGION=us-west-2
+# or
+AZURE_SUBSCRIPTION_ID=your-subscription-id
+```
+
+### Step 3: Cloud Provider Setup
+
+#### Option A: AWS (Recommended)
+
+```bash
+# 1. Request BAA (Business Associate Agreement)
+# Go to: AWS Artifact → Agreements → Accept HIPAA BAA
+
+# 2. Create RDS PostgreSQL (HIPAA-eligible)
+aws rds create-db-instance \
+    --db-instance-identifier rady-hipaa-db \
+    --db-instance-class db.t3.medium \
+    --engine postgres \
+    --storage-encrypted \
+    --kms-key-id alias/aws/rds \
+    --master-username admin \
+    --master-user-password <secure-password>
+
+# 3. Enable CloudTrail for API logging
+aws cloudtrail create-trail \
+    --name rady-hipaa-trail \
+    --s3-bucket-name rady-audit-logs \
+    --is-multi-region-trail \
+    --enable-log-file-validation
+
+# 4. Deploy with ECS/Fargate
+# See docker-compose.aws.yml for configuration
+```
+
+#### Option B: Azure
+
+```bash
+# 1. Accept HIPAA BAA
+# Go to: Azure Portal → Compliance → Regulatory Compliance
+
+# 2. Create Azure SQL Database
+az sql server create \
+    --name rady-hipaa-server \
+    --resource-group rady-rg \
+    --location westus2 \
+    --admin-user admin \
+    --admin-password <secure-password>
+
+# 3. Enable transparent data encryption (TDE)
+az sql db tde set \
+    --database rady-db \
+    --server rady-hipaa-server \
+    --resource-group rady-rg \
+    --status Enabled
+
+# 4. Deploy with Azure Container Apps
+# See docker-compose.azure.yml for configuration
+```
+
+### Step 4: Real-Time Alerting Setup
+
+**Add to `backend/app/audit.py`:**
+
+```python
+import smtplib
+from email.mime.text import MIMEText
+
+def send_violation_alert(event: AuditEvent):
+    """Send email alert for critical violations."""
+    if event.violation_severity not in ['critical', 'high']:
+        return
+    
+    msg = MIMEText(f'''
+HIPAA Violation Alert
+
+Severity: {event.violation_severity.upper()}
+Time: {event.timestamp}
+User: {event.user_email} ({event.user_role})
+Resource: {event.resource_type}/{event.resource_id}
+Patient: {event.patient_id}
+
+Reason: {event.violation_reason}
+
+Please investigate immediately.
+    ''')
+    
+    msg['Subject'] = f'[HIPAA ALERT] {event.violation_severity.upper()} Violation Detected'
+    msg['From'] = os.getenv('ALERT_EMAIL_FROM')
+    msg['To'] = os.getenv('HIPAA_ALERT_EMAIL')
+    
+    with smtplib.SMTP(os.getenv('SMTP_HOST'), int(os.getenv('SMTP_PORT'))) as server:
+        server.starttls()
+        server.login(os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD'))
+        server.send_message(msg)
+```
+
+### Step 5: Compliance Checklist
+
+#### Technical Requirements
+
+- [ ] **Encryption at Rest** - AES-256 for all databases
+- [ ] **Encryption in Transit** - TLS 1.3 for all connections
+- [ ] **Access Logging** - All PHI access tracked
+- [ ] **Audit Log Retention** - 6 years minimum
+- [ ] **Immutable Logs** - No modification/deletion allowed
+- [ ] **Access Controls** - Role-based permissions
+- [ ] **Session Timeouts** - 15-minute inactivity logout
+- [ ] **Password Policy** - 12+ chars, complexity requirements
+
+#### Administrative Requirements
+
+- [ ] **BAA Signed** - With cloud provider (AWS/Azure/GCP)
+- [ ] **Privacy Officer** - Designated contact
+- [ ] **Incident Response Plan** - Documented procedures
+- [ ] **Employee Training** - Annual HIPAA training
+- [ ] **Risk Assessment** - Annual security review
+- [ ] **Breach Notification** - 60-day notification process
+
+#### Optional Certifications
+
+- [ ] **SOC 2 Type II** - Security audit certification
+- [ ] **HITRUST** - Healthcare-specific certification
+- [ ] **ISO 27001** - Information security management
+
+### Step 6: Monitoring & Maintenance
+
+**Daily Tasks (Automated):**
+- Review new violations in dashboard
+- Check for after-hours access patterns
+- Monitor system health metrics
+
+**Weekly Tasks:**
+- Review audit log summary
+- Check for bulk access patterns
+- Verify backup integrity
+
+**Monthly Tasks:**
+- Security patch updates
+- Access review (remove inactive users)
+- Compliance dashboard review with privacy officer
+
+**Annual Tasks:**
+- Full risk assessment
+- Penetration testing
+- HIPAA training refresh
+- Policy review and updates
+
+---
+
 ## 📄 License
 
 Proprietary - Rady Children's Health
@@ -438,6 +702,9 @@ Proprietary - Rady Children's Health
 **Technical Issues:**
 - Check API documentation: http://localhost:8000/docs
 - Review logs: `docker-compose logs`
+
+**HIPAA Compliance Questions:**
+- Contact: compliance@radychildrens.org
 
 **Contact:**
 - Development Team: [Contact Information]
