@@ -28,6 +28,23 @@ except ImportError as e:
     PHIBlockedError = Exception
     print(f"PHI Guardrail not available: {e}")
 
+# LangFuse integration for LLM observability
+try:
+    from app.langfuse_integration import get_langfuse_client, log_generation, LANGFUSE_AVAILABLE
+    if LANGFUSE_AVAILABLE:
+        # Initialize client to verify configuration
+        _lf_client = get_langfuse_client()
+        if _lf_client:
+            print("LangFuse tracing enabled")
+        else:
+            print("LangFuse available but not configured (check API keys in .env)")
+    else:
+        print("LangFuse package not installed")
+except ImportError as e:
+    LANGFUSE_AVAILABLE = False
+    log_generation = None
+    print(f"LangFuse integration not available: {e}")
+
 # Initialize memory manager (using simple storage)
 from app.memory_simple import create_memory_manager, MEMORY_AVAILABLE
 from app.memory_instance import set_memory_manager
@@ -217,10 +234,9 @@ async def chat(request: ChatRequest):
             chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
             
             # Invoke agent with memory (using safe/redacted query)
-            response = agent_executor.invoke({
-                "input": safe_query,
-                "chat_history": chat_history
-            })
+            response = agent_executor.invoke(
+                {"input": safe_query, "chat_history": chat_history}
+            )
             
             # Save to memory (store original query for context, safe output)
             if memory:
@@ -236,6 +252,17 @@ async def chat(request: ChatRequest):
         output_text = response["output"]
         if PHI_GUARDRAIL_AVAILABLE and token_map:
             output_text = restore_from_llm(output_text, token_map, restore=True)
+        
+        # Log to LangFuse for observability
+        if LANGFUSE_AVAILABLE and log_generation:
+            log_generation(
+                name="chat",
+                input_text=safe_query,
+                output_text=output_text,
+                model="gpt-4o-mini",
+                session_id=request.session_id,
+                metadata={"phi_redacted": len(token_map) > 0}
+            )
         
         return ChatResponse(response=output_text)
     except HTTPException:
@@ -276,10 +303,9 @@ async def chat_stream(request: ChatRequest):
             if MEMORY_AVAILABLE and memory_manager:
                 memory = memory_manager.get_memory(request.session_id)
                 chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
-                response = agent_executor.invoke({
-                    "input": safe_query,
-                    "chat_history": chat_history
-                })
+                response = agent_executor.invoke(
+                    {"input": safe_query, "chat_history": chat_history}
+                )
                 if memory:
                     memory.save_context({"input": request.query}, {"output": response["output"]})
             else:
@@ -290,6 +316,17 @@ async def chat_stream(request: ChatRequest):
             # Restore tokens in output if needed
             if PHI_GUARDRAIL_AVAILABLE and token_map:
                 text = restore_from_llm(text, token_map, restore=True)
+            
+            # Log to LangFuse for observability
+            if LANGFUSE_AVAILABLE and log_generation:
+                log_generation(
+                    name="chat_stream",
+                    input_text=safe_query,
+                    output_text=text,
+                    model="gpt-4o-mini",
+                    session_id=request.session_id,
+                    metadata={"phi_redacted": len(token_map) > 0}
+                )
             
             # Stream in small chunks. Prefer word-boundary chunks for smoother UI
             chunk_size = 40

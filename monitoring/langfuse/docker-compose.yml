@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
   langfuse-server:
-    image: langfuse/langfuse:latest
+    image: langfuse/langfuse:2
     container_name: langfuse
     ports:
       - "3001:3000"
     environment:
       - DATABASE_URL=postgresql://langfuse:langfuse@langfuse-db:5432/langfuse
-      - NEXTAUTH_SECRET=your-secret-key-min-32-chars-here-change-me
+      - NEXTAUTH_SECRET=your-secret-key-min-32-chars-here-change-me-now
       - NEXTAUTH_URL=http://localhost:3001
-      - SALT=your-salt-key-min-32-chars-here-change-me
+      - SALT=your-salt-key-min-32-chars-here-change-me-now-salt
       - TELEMETRY_ENABLED=false
     depends_on:
       langfuse-db:

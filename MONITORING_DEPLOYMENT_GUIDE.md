@@ -8,7 +8,7 @@ This guide provides step-by-step instructions for deploying monitoring and obser
 
 1. [Overview & Comparison](#overview--comparison)
 2. [Option 1: LangSmith](#option-1-langsmith-easiest)
-3. [Option 2: LangFuse (Self-Hosted)](#option-2-langfuse-self-hosted)
+3. [Option 2: LangFuse v2 (Self-Hosted)](#option-2-langfuse-v2-self-hosted)
 4. [Option 3: OpenTelemetry + Jaeger](#option-3-opentelemetry--jaeger)
 5. [Option 4: Full Stack (Grafana + Prometheus + Jaeger)](#option-4-full-observability-stack)
 6. [Option 5: Arize Phoenix (Open-Source LLM Observability)](#option-5-arize-phoenix)
@@ -116,11 +116,14 @@ LANGCHAIN_TRACING_V2=false
 
 ---
 
-## Option 2: LangFuse (Self-Hosted)
+## Option 2: LangFuse v2 (Self-Hosted)
 
 **Best for:** Production, HIPAA compliance, cost control  
 **HIPAA:** ✅ Compliant when self-hosted  
-**Time:** ~15 minutes
+**Time:** ~15 minutes  
+**Version:** LangFuse v2 (recommended for simpler setup - only requires PostgreSQL)
+
+> **Note:** LangFuse v3 requires ClickHouse which adds complexity. We use v2 for simpler deployment.
 
 ### What is LangFuse?
 
@@ -136,24 +139,22 @@ LangFuse is an open-source alternative to LangSmith that you can self-host. It p
 - Docker and Docker Compose installed
 - PostgreSQL (included in docker-compose)
 
-### Step 1: Create LangFuse Docker Compose
+### Step 1: LangFuse Docker Compose
 
-Create `monitoring/langfuse/docker-compose.yml`:
+The file is already created at `monitoring/langfuse/docker-compose.yml`:
 
 ```yaml
-version: '3.8'
-
 services:
   langfuse-server:
-    image: langfuse/langfuse:latest
+    image: langfuse/langfuse:2
     container_name: langfuse
     ports:
       - "3001:3000"
     environment:
       - DATABASE_URL=postgresql://langfuse:langfuse@langfuse-db:5432/langfuse
-      - NEXTAUTH_SECRET=your-secret-key-min-32-chars-here
+      - NEXTAUTH_SECRET=your-secret-key-min-32-chars-here-change-me-now
       - NEXTAUTH_URL=http://localhost:3001
-      - SALT=your-salt-key-min-32-chars-here
+      - SALT=your-salt-key-min-32-chars-here-change-me-now-salt
       - TELEMETRY_ENABLED=false
     depends_on:
       langfuse-db:
@@ -180,16 +181,15 @@ volumes:
   langfuse_postgres_data:
 ```
 
+> **Important:** For production, change `NEXTAUTH_SECRET` and `SALT` to secure random strings (minimum 32 characters).
+
 ### Step 2: Start LangFuse
 
 ```bash
-# Create directory
-mkdir -p monitoring/langfuse
+# Navigate to the langfuse directory
 cd monitoring/langfuse
 
-# Copy the docker-compose.yml above to this directory
-
-# Start LangFuse
+# Start LangFuse (pulls images and starts containers)
 docker-compose up -d
 
 # Check status
@@ -212,9 +212,9 @@ pip install langfuse
 pip freeze > requirements.txt
 ```
 
-### Step 5: Add LangFuse Integration
+### Step 5: LangFuse Integration Module
 
-Create `backend/app/langfuse_integration.py`:
+The integration file is already created at `backend/app/langfuse_integration.py`:
 
 ```python
 """
