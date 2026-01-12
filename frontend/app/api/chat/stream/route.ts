@@ -3,7 +3,8 @@ export const runtime = 'nodejs';
 function getBackendUrl() {
   // In Vercel, BACKEND_URL should be set; locally default to localhost
   if (process.env.BACKEND_URL) return process.env.BACKEND_URL;
-  return 'http://localhost:8000';
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  return 'http://localhost:8002';
 }
 
 export async function POST(request: Request) {

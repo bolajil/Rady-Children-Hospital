@@ -24,26 +24,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Try to import LangFuse
+# Try to import LangFuse (v2 API)
 try:
-    from langfuse import Langfuse, observe
+    from langfuse import Langfuse
     LANGFUSE_AVAILABLE = True
     
-    # Try to import LangChain callback handler (may not exist in newer versions)
+    # Try to import LangChain callback handler
     try:
         from langfuse.callback import CallbackHandler
         LANGFUSE_CALLBACK_AVAILABLE = True
     except ImportError:
         CallbackHandler = None
         LANGFUSE_CALLBACK_AVAILABLE = False
-        logger.info("LangFuse callback handler not available - using observe decorator instead")
 except ImportError:
     LANGFUSE_AVAILABLE = False
     LANGFUSE_CALLBACK_AVAILABLE = False
     Langfuse = None
     CallbackHandler = None
-    observe = None
-    logger.warning("LangFuse not installed. Run: pip install langfuse")
+    logger.warning("LangFuse not installed. Run: pip install 'langfuse<3.0.0'")
 
 
 # Singleton client instance
@@ -202,18 +200,22 @@ def log_generation(
         return None
     
     try:
-        # LangFuse v3 API - use start_generation
-        generation = client.start_generation(
+        # LangFuse v2 API - use trace() and generation()
+        trace = client.trace(
             name=name,
-            model=model,
-            input=input_text,
-            output=output_text,
+            session_id=session_id,
             metadata=metadata or {}
         )
-        generation.end()
+        
+        trace.generation(
+            name=f"{name}_generation",
+            model=model,
+            input=input_text,
+            output=output_text
+        )
         
         client.flush()
-        return generation.id if hasattr(generation, 'id') else "logged"
+        return trace.id
         
     except Exception as e:
         logger.error(f"Failed to log generation: {e}")

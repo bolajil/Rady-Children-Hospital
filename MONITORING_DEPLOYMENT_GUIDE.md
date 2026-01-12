@@ -206,9 +206,11 @@ docker-compose ps
 
 ### Step 4: Install LangFuse Python SDK
 
+> **Important:** Use LangFuse SDK v2 (not v3) for compatibility with LangFuse Server v2.
+
 ```bash
 cd backend
-pip install langfuse
+pip install "langfuse<3.0.0"
 pip freeze > requirements.txt
 ```
 
@@ -216,13 +218,11 @@ pip freeze > requirements.txt
 
 The integration file is already created at `backend/app/langfuse_integration.py`.
 
-> **Note:** LangFuse SDK v3 has a different API than v2. The code below works with LangFuse SDK v3.x and LangFuse Server v2.
-
 **Key functions:**
 
 ```python
 """
-LangFuse Integration for LLM Observability (v3 SDK)
+LangFuse Integration for LLM Observability (v2 SDK)
 
 This module provides LangFuse tracing for all LLM calls.
 Self-hosted LangFuse is HIPAA-compliant as no data leaves your infrastructure.
@@ -234,15 +234,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Try to import LangFuse
+# Try to import LangFuse (v2 API)
 try:
-    from langfuse import Langfuse, observe
+    from langfuse import Langfuse
     LANGFUSE_AVAILABLE = True
 except ImportError:
     LANGFUSE_AVAILABLE = False
     Langfuse = None
-    observe = None
-    logger.warning("LangFuse not installed. Run: pip install langfuse")
+    logger.warning("LangFuse not installed. Run: pip install 'langfuse<3.0.0'")
 
 # Singleton client instance
 _langfuse_client = None
@@ -299,24 +298,29 @@ def log_generation(
         session_id: Optional session ID
         
     Returns:
-        Generation ID or None
+        Trace ID or None
     """
     client = get_langfuse_client()
     if client is None:
         return None
     
     try:
-        # LangFuse v3 SDK API
-        generation = client.start_generation(
+        # LangFuse v2 SDK API - use trace() and generation()
+        trace = client.trace(
             name=name,
-            model=model,
-            input=input_text,
-            output=output_text,
+            session_id=session_id,
             metadata=metadata or {}
         )
-        generation.end()
+        
+        trace.generation(
+            name=f"{name}_generation",
+            model=model,
+            input=input_text,
+            output=output_text
+        )
+        
         client.flush()
-        return generation.id if hasattr(generation, 'id') else "logged"
+        return trace.id
     except Exception as e:
         logger.error(f"Failed to log generation: {e}")
         return None

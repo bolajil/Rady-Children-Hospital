@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ class CurrentUser(BaseModel):
     email: str
     full_name: str
     role: Role
-    patient_id: str | None = None
+    patient_id: Optional[str] = None
 
 
 def get_jwt_secret() -> str:

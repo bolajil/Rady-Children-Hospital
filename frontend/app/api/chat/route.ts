@@ -7,8 +7,11 @@ function getBackendUrl() {
   if (process.env.BACKEND_URL) {
     return process.env.BACKEND_URL;
   }
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
   // Local development - always use localhost
-  return 'http://localhost:8000';
+  return 'http://localhost:8002';
 }
 
 export async function POST(request: Request) {
