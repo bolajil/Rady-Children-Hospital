@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "description": "HIPAA-compliant policy for LLM data handling. Controls what PHI can be sent to which models.",
+  "default_action": "redact",
+  "models": {
+    "gpt-4o-mini": {
+      "provider": "openai",
+      "has_baa": false,
+      "phi_policy": "redact",
+      "allowed_phi_types": [],
+      "notes": "No BAA with OpenAI - all PHI must be redacted before sending"
+    },
+    "gpt-4": {
+      "provider": "openai",
+      "has_baa": false,
+      "phi_policy": "redact",
+      "allowed_phi_types": [],
+      "notes": "No BAA with OpenAI - all PHI must be redacted before sending"
+    },
+    "gpt-4o": {
+      "provider": "openai",
+      "has_baa": false,
+      "phi_policy": "redact",
+      "allowed_phi_types": [],
+      "notes": "No BAA with OpenAI - all PHI must be redacted before sending"
+    },
+    "azure-gpt-4": {
+      "provider": "azure",
+      "has_baa": true,
+      "phi_policy": "allow_with_audit",
+      "allowed_phi_types": ["age", "gender", "diagnosis", "medication"],
+      "blocked_phi_types": ["ssn", "mrn", "full_name", "address", "phone", "email", "dob"],
+      "notes": "Azure with BAA - limited PHI allowed, direct identifiers still redacted"
+    }
+  },
+  "phi_categories": {
+    "direct_identifiers": {
+      "description": "18 HIPAA identifiers that directly identify an individual",
+      "types": ["full_name", "ssn", "mrn", "address", "phone", "fax", "email", "dob", "admission_date", "discharge_date", "account_number", "certificate_number", "vehicle_id", "device_id", "url", "ip_address", "biometric", "photo"],
+      "default_action": "redact"
+    },
+    "quasi_identifiers": {
+      "description": "Data that could identify when combined",
+      "types": ["age", "gender", "zip_code", "diagnosis", "procedure"],
+      "default_action": "allow_with_audit"
+    },
+    "clinical_data": {
+      "description": "Clinical information without identifiers",
+      "types": ["symptom", "medication", "lab_value", "vital_sign"],
+      "default_action": "allow"
+    }
+  },
+  "audit_settings": {
+    "log_all_llm_calls": true,
+    "log_redactions": true,
+    "log_policy_decisions": true,
+    "alert_on_phi_detected": true,
+    "alert_on_block": true
+  },
+  "redaction_settings": {
+    "replacement_format": "[{type}_{index}]",
+    "preserve_token_mapping": true,
+    "token_ttl_seconds": 3600,
+    "max_tokens_per_session": 1000
+  }
+}

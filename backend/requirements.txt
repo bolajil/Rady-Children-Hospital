@@ -16,7 +16,10 @@ langchain-text-splitters>=0.3.0
 
 # Vector Store & Embeddings
 faiss-cpu>=1.7.0
-sentence-transformers>=2.0.0
+# NOTE: Using OpenAI embeddings instead of local sentence-transformers
+# This avoids PyTorch + NVIDIA CUDA deps (4GB+) that slow down Docker builds
+# If you need local embeddings, uncomment below and use: --extra-index-url https://download.pytorch.org/whl/cpu
+# sentence-transformers>=2.0.0
 
 # HTTP Client
 httpx>=0.25.0

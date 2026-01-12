@@ -244,3 +244,98 @@ async def generate_sample_events(
         "message": "Sample events generated",
         "stats": audit_logger.get_summary_stats()
     }
+
+
+# PHI Guardrail Statistics Endpoint
+@router.get("/phi-guardrail/stats")
+async def get_phi_guardrail_stats(
+    user: CurrentUser = Depends(require_roles(Role.owner))
+):
+    """
+    Get PHI guardrail statistics showing how many LLM calls were processed,
+    how much PHI was detected and redacted, and block rates.
+    Only accessible by owners/admins.
+    """
+    try:
+        from app.phi_guardrail import get_guardrail
+        guardrail = get_guardrail()
+        stats = guardrail.get_stats()
+        
+        return {
+            "guardrail_stats": stats,
+            "status": "active",
+            "last_updated": datetime.now().isoformat()
+        }
+    except ImportError:
+        return {
+            "guardrail_stats": {},
+            "status": "not_available",
+            "message": "PHI Guardrail module not installed"
+        }
+
+
+@router.get("/phi-guardrail/recent-decisions")
+async def get_phi_guardrail_decisions(
+    limit: int = 50,
+    user: CurrentUser = Depends(require_roles(Role.owner))
+):
+    """
+    Get recent PHI guardrail decisions for audit review.
+    Shows what PHI was detected and what action was taken.
+    Only accessible by owners/admins.
+    """
+    try:
+        from app.phi_guardrail import get_guardrail
+        guardrail = get_guardrail()
+        decisions = guardrail.get_recent_decisions(limit=limit)
+        
+        return {
+            "decisions": [
+                {
+                    "timestamp": d.timestamp.isoformat(),
+                    "session_id": d.session_id,
+                    "model_name": d.model_name,
+                    "action": d.action.value,
+                    "phi_types_detected": [m.phi_type.value for m in d.phi_detected],
+                    "phi_count": len(d.phi_detected),
+                    "phi_redacted": d.phi_redacted,
+                    "phi_blocked": d.phi_blocked,
+                    "input_hash": d.input_hash,
+                    "user_id": d.details.get("user_id"),
+                    "model_has_baa": d.details.get("model_has_baa", False),
+                }
+                for d in decisions
+            ],
+            "total": len(decisions)
+        }
+    except ImportError:
+        return {
+            "decisions": [],
+            "total": 0,
+            "message": "PHI Guardrail module not installed"
+        }
+
+
+@router.get("/phi-guardrail/policy")
+async def get_phi_guardrail_policy(
+    user: CurrentUser = Depends(require_roles(Role.owner))
+):
+    """
+    Get the current PHI guardrail policy configuration.
+    Shows which models have BAA, what PHI types are allowed/blocked.
+    Only accessible by owners/admins.
+    """
+    try:
+        from app.phi_guardrail import get_guardrail
+        guardrail = get_guardrail()
+        
+        return {
+            "policy": guardrail.policy,
+            "status": "active"
+        }
+    except ImportError:
+        return {
+            "policy": {},
+            "status": "not_available",
+            "message": "PHI Guardrail module not installed"
+        }

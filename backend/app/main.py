@@ -18,6 +18,16 @@ except ImportError:
 
 from app.agent import agent_executor, llm
 
+# PHI Guardrail for HIPAA-compliant LLM calls
+try:
+    from app.phi_guardrail import get_guardrail, process_for_llm, restore_from_llm, PHIBlockedError
+    PHI_GUARDRAIL_AVAILABLE = True
+    print("PHI Guardrail initialized - HIPAA protection active")
+except ImportError as e:
+    PHI_GUARDRAIL_AVAILABLE = False
+    PHIBlockedError = Exception
+    print(f"PHI Guardrail not available: {e}")
+
 # Initialize memory manager (using simple storage)
 from app.memory_simple import create_memory_manager, MEMORY_AVAILABLE
 from app.memory_instance import set_memory_manager
@@ -177,20 +187,42 @@ async def chat(request: ChatRequest):
     """
     Endpoint to interact with the GenAI agent with conversation memory.
     The agent can search the knowledge base and remembers conversation context.
+    
+    HIPAA Guardrail: All inputs are scanned for PHI and redacted/tokenized
+    before being sent to the LLM. This protects patient data from leaving
+    the system when using non-BAA models.
     """
     try:
+        # Apply PHI guardrail to protect patient data
+        safe_query = request.query
+        token_map = {}
+        
+        if PHI_GUARDRAIL_AVAILABLE:
+            try:
+                safe_query, token_map = process_for_llm(
+                    text=request.query,
+                    model_name="gpt-4o-mini",
+                    session_id=request.session_id
+                )
+            except PHIBlockedError as e:
+                # Request blocked due to PHI policy - return error to user
+                raise HTTPException(
+                    status_code=422,
+                    detail=str(e)
+                )
+        
         # Get memory for this session
         if MEMORY_AVAILABLE and memory_manager:
             memory = memory_manager.get_memory(request.session_id)
             chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
             
-            # Invoke agent with memory
+            # Invoke agent with memory (using safe/redacted query)
             response = agent_executor.invoke({
-                "input": request.query,
+                "input": safe_query,
                 "chat_history": chat_history
             })
             
-            # Save to memory
+            # Save to memory (store original query for context, safe output)
             if memory:
                 memory.save_context(
                     {"input": request.query},
@@ -198,9 +230,16 @@ async def chat(request: ChatRequest):
                 )
         else:
             # Fallback without memory
-            response = agent_executor.invoke({"input": request.query})
+            response = agent_executor.invoke({"input": safe_query})
         
-        return ChatResponse(response=response["output"])
+        # Process output through guardrail (optionally restore tokens)
+        output_text = response["output"]
+        if PHI_GUARDRAIL_AVAILABLE and token_map:
+            output_text = restore_from_llm(output_text, token_map, restore=True)
+        
+        return ChatResponse(response=output_text)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -212,23 +251,46 @@ async def chat_stream(request: ChatRequest):
     - If conversation memory is available, it's used as in the /chat endpoint.
     - If the underlying LLM/agent doesn't support server-side streaming via callbacks
       in the current environment, we chunk the final text to simulate token streaming.
+    
+    HIPAA Guardrail: All inputs are scanned for PHI and redacted/tokenized
+    before being sent to the LLM.
     """
     async def _generator():
         try:
+            # Apply PHI guardrail to protect patient data
+            safe_query = request.query
+            token_map = {}
+            
+            if PHI_GUARDRAIL_AVAILABLE:
+                try:
+                    safe_query, token_map = process_for_llm(
+                        text=request.query,
+                        model_name="gpt-4o-mini",
+                        session_id=request.session_id
+                    )
+                except PHIBlockedError as e:
+                    yield f"[error] {str(e)}\n"
+                    return
+            
             # Get memory and chat history if available
             if MEMORY_AVAILABLE and memory_manager:
                 memory = memory_manager.get_memory(request.session_id)
                 chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
                 response = agent_executor.invoke({
-                    "input": request.query,
+                    "input": safe_query,
                     "chat_history": chat_history
                 })
                 if memory:
                     memory.save_context({"input": request.query}, {"output": response["output"]})
             else:
-                response = agent_executor.invoke({"input": request.query})
+                response = agent_executor.invoke({"input": safe_query})
 
             text = str(response.get("output", ""))
+            
+            # Restore tokens in output if needed
+            if PHI_GUARDRAIL_AVAILABLE and token_map:
+                text = restore_from_llm(text, token_map, restore=True)
+            
             # Stream in small chunks. Prefer word-boundary chunks for smoother UI
             chunk_size = 40
             for i in range(0, len(text), chunk_size):
