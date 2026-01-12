@@ -214,145 +214,173 @@ pip freeze > requirements.txt
 
 ### Step 5: LangFuse Integration Module
 
-The integration file is already created at `backend/app/langfuse_integration.py`:
+The integration file is already created at `backend/app/langfuse_integration.py`.
+
+> **Note:** LangFuse SDK v3 has a different API than v2. The code below works with LangFuse SDK v3.x and LangFuse Server v2.
+
+**Key functions:**
 
 ```python
 """
-LangFuse Integration for LLM Observability
+LangFuse Integration for LLM Observability (v3 SDK)
 
 This module provides LangFuse tracing for all LLM calls.
 Self-hosted LangFuse is HIPAA-compliant as no data leaves your infrastructure.
 """
 
 import os
-from functools import wraps
-from typing import Optional, Callable, Any
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
 
 # Try to import LangFuse
 try:
-    from langfuse import Langfuse
-    from langfuse.callback import CallbackHandler
+    from langfuse import Langfuse, observe
     LANGFUSE_AVAILABLE = True
 except ImportError:
     LANGFUSE_AVAILABLE = False
+    Langfuse = None
+    observe = None
     logger.warning("LangFuse not installed. Run: pip install langfuse")
+
+# Singleton client instance
+_langfuse_client = None
 
 
 def get_langfuse_client() -> Optional["Langfuse"]:
-    """
-    Get LangFuse client instance.
+    """Get LangFuse client instance (singleton)."""
+    global _langfuse_client
     
-    Returns:
-        Langfuse client or None if not configured
-    """
     if not LANGFUSE_AVAILABLE:
         return None
+    
+    if _langfuse_client is not None:
+        return _langfuse_client
     
     public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
     host = os.getenv("LANGFUSE_HOST", "http://localhost:3001")
     
     if not public_key or not secret_key:
-        logger.warning("LangFuse keys not configured. Set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY")
+        logger.info("LangFuse keys not configured")
         return None
     
     try:
-        return Langfuse(
+        _langfuse_client = Langfuse(
             public_key=public_key,
             secret_key=secret_key,
             host=host
         )
+        logger.info(f"LangFuse client initialized. Host: {host}")
+        return _langfuse_client
     except Exception as e:
         logger.error(f"Failed to initialize LangFuse: {e}")
         return None
 
 
-def get_langfuse_callback() -> Optional["CallbackHandler"]:
+def log_generation(
+    name: str,
+    input_text: str,
+    output_text: str,
+    model: str = "gpt-4",
+    metadata: dict = None,
+    session_id: Optional[str] = None
+) -> Optional[str]:
     """
-    Get LangFuse callback handler for LangChain integration.
+    Log a single LLM generation to LangFuse.
     
+    Args:
+        name: Name for the generation
+        input_text: Input prompt
+        output_text: Model output
+        model: Model name
+        metadata: Optional metadata
+        session_id: Optional session ID
+        
     Returns:
-        CallbackHandler or None if not configured
+        Generation ID or None
     """
-    if not LANGFUSE_AVAILABLE:
-        return None
-    
-    public_key = os.getenv("LANGFUSE_PUBLIC_KEY")
-    secret_key = os.getenv("LANGFUSE_SECRET_KEY")
-    host = os.getenv("LANGFUSE_HOST", "http://localhost:3001")
-    
-    if not public_key or not secret_key:
+    client = get_langfuse_client()
+    if client is None:
         return None
     
     try:
-        return CallbackHandler(
-            public_key=public_key,
-            secret_key=secret_key,
-            host=host
+        # LangFuse v3 SDK API
+        generation = client.start_generation(
+            name=name,
+            model=model,
+            input=input_text,
+            output=output_text,
+            metadata=metadata or {}
         )
+        generation.end()
+        client.flush()
+        return generation.id if hasattr(generation, 'id') else "logged"
     except Exception as e:
-        logger.error(f"Failed to create LangFuse callback: {e}")
+        logger.error(f"Failed to log generation: {e}")
         return None
+```
 
+### Step 6: Integrate with Chat Endpoints
 
-def trace_llm_call(
-    name: str = "llm_call",
-    metadata: dict = None
-) -> Callable:
-    """
-    Decorator to trace LLM calls with LangFuse.
-    
-    Usage:
-        @trace_llm_call(name="chat_completion")
-        def my_llm_function(prompt):
-            ...
-    """
-    def decorator(func: Callable) -> Callable:
-        @wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
-            client = get_langfuse_client()
-            
-            if client is None:
-                return func(*args, **kwargs)
-            
-            trace = client.trace(name=name, metadata=metadata or {})
-            
-            try:
-                result = func(*args, **kwargs)
-                trace.update(output=str(result)[:1000])  # Truncate for storage
-                return result
-            except Exception as e:
-                trace.update(
-                    output=str(e),
-                    metadata={"error": True, "error_type": type(e).__name__}
-                )
-                raise
-            finally:
-                client.flush()
-        
-        return wrapper
-    return decorator
+The chat endpoints in `backend/app/main.py` are already configured to use LangFuse:
 
+```python
+# In main.py - after getting the LLM response:
 
+# Log to LangFuse for observability
+if LANGFUSE_AVAILABLE and log_generation:
+    log_generation(
+        name="chat",
+        input_text=safe_query,
+        output_text=output_text,
+        model="gpt-4o-mini",
+        session_id=request.session_id,
+        metadata={"phi_redacted": len(token_map) > 0}
+    )
+```
+
+### Step 7: Verify Integration
+
+1. Start the backend:
+   ```bash
+   cd backend
+   .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+   ```
+
+2. Look for this message in the startup logs:
+   ```
+   LangFuse tracing enabled
+   ```
+
+3. Send a test chat request:
+   ```powershell
+   Invoke-RestMethod -Uri "http://localhost:8000/chat" -Method POST `
+     -ContentType "application/json" `
+     -Body '{"query": "What is fever?", "session_id": "test"}'
+   ```
+
+4. Open LangFuse at http://localhost:3001 → Your Project → **Generations** tab
+
+### Step 8: Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| "LangFuse keys not configured" | Check `.env` has `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` |
+| No traces appearing | Verify LangFuse server is running: `docker-compose ps` |
+| OTLP export errors in logs | Expected with LangFuse v2 server - core logging still works |
+| Connection refused | Check LangFuse is running on port 3001 |
+
+### Step 9: Log User Feedback (Optional)
+
+```python
 def log_user_feedback(
     trace_id: str,
     score: float,
     comment: Optional[str] = None
 ) -> bool:
-    """
-    Log user feedback for a trace.
-    
-    Args:
-        trace_id: The trace ID to associate feedback with
-        score: Score from 0 to 1 (0 = negative, 1 = positive)
-        comment: Optional feedback comment
-        
-    Returns:
-        True if feedback was logged successfully
-    """
+    """Log user feedback for a trace."""
     client = get_langfuse_client()
     if client is None:
         return False
@@ -371,62 +399,7 @@ def log_user_feedback(
         return False
 ```
 
-### Step 6: Configure Environment Variables
-
-Add to `backend/.env`:
-
-```bash
-# LangFuse Configuration (Self-Hosted)
-LANGFUSE_PUBLIC_KEY=pk-lf-your-public-key
-LANGFUSE_SECRET_KEY=sk-lf-your-secret-key
-LANGFUSE_HOST=http://localhost:3001
-```
-
-### Step 7: Integrate with Agent
-
-Update `backend/app/agent.py` to use LangFuse callback:
-
-Add at the top of the file:
-```python
-# Import LangFuse integration
-try:
-    from app.langfuse_integration import get_langfuse_callback
-    LANGFUSE_AVAILABLE = True
-except ImportError:
-    LANGFUSE_AVAILABLE = False
-    get_langfuse_callback = lambda: None
-```
-
-When creating the agent executor, add the callback:
-```python
-# Get LangFuse callback if available
-langfuse_callback = get_langfuse_callback() if LANGFUSE_AVAILABLE else None
-callbacks = [langfuse_callback] if langfuse_callback else []
-
-agent_executor = AgentExecutor(
-    agent=agent,
-    tools=tools,
-    verbose=True,
-    handle_parsing_errors=True,
-    max_iterations=3,
-    callbacks=callbacks,  # Add this line
-)
-```
-
-### Step 8: Test LangFuse
-
-1. Restart the backend:
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-
-2. Send a chat message through the app
-
-3. Open http://localhost:3001
-
-4. Navigate to Traces → You should see your LLM calls
-
-### Step 9: Production Deployment
+### Step 10: Production Deployment
 
 For production, update the docker-compose with:
 - Proper secrets (use environment variables or secrets manager)
