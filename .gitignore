@@ -71,3 +71,13 @@ docker-compose.override.yml
 .github/workflows/
 .vercel
 .env*.local
+
+# Terraform
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/.terraform.lock.hcl
+*.exe
+
+# Windows
+desktop.ini
