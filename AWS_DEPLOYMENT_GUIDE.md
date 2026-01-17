@@ -404,6 +404,73 @@ https://us-east-1.console.aws.amazon.com/secretsmanager/listsecrets
 
 ---
 
+## Updating an Existing Deployment
+
+When you make code changes and want to deploy them to AWS:
+
+### Step 1: Build New Docker Images
+
+```bash
+cd ~/.gemini/antigravity/scratch/rady-genai
+
+# Build backend
+docker build -t rady-genai-backend:latest ./backend
+
+# Build frontend
+docker build -t rady-genai-frontend:latest ./frontend
+```
+
+### Step 2: Login to ECR
+
+```bash
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 137738968757.dkr.ecr.us-east-1.amazonaws.com
+```
+
+### Step 3: Tag and Push Images
+
+```bash
+# Tag and push backend
+docker tag rady-genai-backend:latest 137738968757.dkr.ecr.us-east-1.amazonaws.com/rady-genai-backend:latest
+docker push 137738968757.dkr.ecr.us-east-1.amazonaws.com/rady-genai-backend:latest
+
+# Tag and push frontend
+docker tag rady-genai-frontend:latest 137738968757.dkr.ecr.us-east-1.amazonaws.com/rady-genai-frontend:latest
+docker push 137738968757.dkr.ecr.us-east-1.amazonaws.com/rady-genai-frontend:latest
+```
+
+### Step 4: Force New Deployment
+
+```bash
+# Update backend service
+aws ecs update-service \
+  --cluster rady-genai-cluster \
+  --service rady-genai-backend-service \
+  --force-new-deployment \
+  --region us-east-1
+
+# Update frontend service
+aws ecs update-service \
+  --cluster rady-genai-cluster \
+  --service rady-genai-frontend-service \
+  --force-new-deployment \
+  --region us-east-1
+```
+
+### Step 5: Monitor Deployment
+
+```bash
+# Watch service status
+aws ecs describe-services \
+  --cluster rady-genai-cluster \
+  --services rady-genai-backend-service rady-genai-frontend-service \
+  --region us-east-1 \
+  --query "services[*].{name:serviceName,running:runningCount,desired:desiredCount,pending:pendingCount}"
+```
+
+✅ **Checkpoint:** `runningCount` matches `desiredCount` for both services (takes 2-3 minutes)
+
+---
+
 ## Cleanup (Stop AWS Charges)
 
 ```bash
