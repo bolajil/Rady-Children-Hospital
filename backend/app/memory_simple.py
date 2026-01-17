@@ -22,6 +22,16 @@ class SimpleMessage:
     timestamp: datetime = field(default_factory=datetime.now)
 
 
+@dataclass
+class SessionMetadata:
+    """Session metadata for tracking user info"""
+    session_id: str
+    user_email: Optional[str] = None
+    user_role: Optional[str] = None
+    created_at: datetime = field(default_factory=datetime.now)
+    last_activity: datetime = field(default_factory=datetime.now)
+
+
 class SimpleMemory:
     """Simple in-memory conversation buffer"""
     def __init__(self):
@@ -47,13 +57,27 @@ class MemoryManager:
     def __init__(self, **kwargs):
         """Initialize memory manager."""
         self._sessions: Dict[str, SimpleMemory] = {}
+        self._session_metadata: Dict[str, SessionMetadata] = {}
         logger.info("MemoryManager initialized with simple storage")
     
-    def get_memory(self, session_id: str = "default") -> SimpleMemory:
+    def get_memory(self, session_id: str = "default", user_email: str = None, user_role: str = None) -> SimpleMemory:
         """Get or create memory for a session."""
         if session_id not in self._sessions:
             self._sessions[session_id] = SimpleMemory()
-            logger.info(f"Created new memory for session: {session_id}")
+            self._session_metadata[session_id] = SessionMetadata(
+                session_id=session_id,
+                user_email=user_email,
+                user_role=user_role
+            )
+            logger.info(f"Created new memory for session: {session_id} (user: {user_email})")
+        else:
+            # Update last activity and user info if provided
+            if session_id in self._session_metadata:
+                self._session_metadata[session_id].last_activity = datetime.now()
+                if user_email:
+                    self._session_metadata[session_id].user_email = user_email
+                if user_role:
+                    self._session_metadata[session_id].user_role = user_role
         return self._sessions[session_id]
     
     def get_conversation_history(self, session_id: str) -> List[BaseMessage]:
@@ -97,10 +121,27 @@ class MemoryManager:
             return None
         
         history = self.get_conversation_history(session_id)
+        metadata = self._session_metadata.get(session_id)
+        
         return {
             "session_id": session_id,
             "message_count": len(history),
+            "user_email": metadata.user_email if metadata else None,
+            "user_role": metadata.user_role if metadata else None,
+            "created_at": metadata.created_at.isoformat() if metadata else None,
+            "last_activity": metadata.last_activity.isoformat() if metadata else None,
         }
+    
+    def get_all_sessions(self) -> List[dict]:
+        """Get information about all active sessions."""
+        sessions = []
+        for session_id in self._sessions.keys():
+            info = self.get_session_info(session_id)
+            if info:
+                sessions.append(info)
+        # Sort by last activity (most recent first)
+        sessions.sort(key=lambda x: x.get("last_activity", ""), reverse=True)
+        return sessions
 
 
 def create_memory_manager(llm=None) -> MemoryManager:

@@ -129,7 +129,12 @@ export default function Home() {
       const response = await fetch(`/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: input, session_id: getSessionId() }),
+        body: JSON.stringify({ 
+          query: input, 
+          session_id: getSessionId(),
+          user_email: user?.email,
+          user_role: user?.role
+        }),
       });
 
       if (!response.body) {
@@ -137,7 +142,12 @@ export default function Home() {
         const fallback = await fetch(`/api/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: input, session_id: getSessionId() }),
+          body: JSON.stringify({ 
+            query: input, 
+            session_id: getSessionId(),
+            user_email: user?.email,
+            user_role: user?.role
+          }),
         });
         const data = await fallback.json();
         setConversations(prev => prev.map(conv => {

@@ -104,6 +104,8 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     query: str
     session_id: str = "default"
+    user_email: Optional[str] = None
+    user_role: Optional[str] = None
 
 class ChatResponse(BaseModel):
     response: str
@@ -232,6 +234,43 @@ async def get_feedback():
         "feedback": feedback_store
     }
 
+@app.get("/sessions")
+async def get_sessions():
+    """Get all active sessions with user info."""
+    sessions = memory_manager.get_all_sessions()
+    return {
+        "total": len(sessions),
+        "sessions": sessions
+    }
+
+@app.get("/sessions/{session_id}")
+async def get_session(session_id: str):
+    """Get details for a specific session."""
+    info = memory_manager.get_session_info(session_id)
+    if not info:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Also get conversation history
+    history = memory_manager.get_conversation_history(session_id)
+    messages = []
+    for msg in history:
+        messages.append({
+            "type": "human" if hasattr(msg, "type") and msg.type == "human" else ("human" if "HumanMessage" in str(type(msg)) else "ai"),
+            "content": msg.content
+        })
+    
+    return {
+        **info,
+        "messages": messages
+    }
+
+@app.delete("/sessions/{session_id}")
+async def delete_session(session_id: str):
+    """Delete a session."""
+    if memory_manager.delete_session(session_id):
+        return {"success": True, "message": f"Session {session_id} deleted"}
+    raise HTTPException(status_code=404, detail="Session not found")
+
 # Include routers
 if AUTH_ROUTER_AVAILABLE:
     app.include_router(auth.router)
@@ -275,9 +314,13 @@ async def chat(request: ChatRequest):
                     detail=str(e)
                 )
         
-        # Get memory for this session
+        # Get memory for this session (with user tracking)
         if MEMORY_AVAILABLE and memory_manager:
-            memory = memory_manager.get_memory(request.session_id)
+            memory = memory_manager.get_memory(
+                request.session_id, 
+                user_email=request.user_email,
+                user_role=request.user_role
+            )
             chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
             
             # Invoke agent with memory (using safe/redacted query)
@@ -364,9 +407,13 @@ async def chat_stream(request: ChatRequest):
                     yield f"[error] {str(e)}\n"
                     return
             
-            # Get memory and chat history if available
+            # Get memory and chat history if available (with user tracking)
             if MEMORY_AVAILABLE and memory_manager:
-                memory = memory_manager.get_memory(request.session_id)
+                memory = memory_manager.get_memory(
+                    request.session_id,
+                    user_email=request.user_email,
+                    user_role=request.user_role
+                )
                 chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
                 response = agent_executor.invoke(
                     {"input": safe_query, "chat_history": chat_history}
@@ -390,9 +437,15 @@ async def chat_stream(request: ChatRequest):
                     trace = _langfuse_client.trace(
                         name="chat_stream",
                         session_id=request.session_id,
+                        user_id=request.user_email,  # LangFuse native user tracking
                         input={"query": safe_query},
                         output={"response": text[:500]},  # Truncate for display
-                        metadata={"phi_redacted": len(token_map) > 0, "latency_ms": latency_ms}
+                        metadata={
+                            "phi_redacted": len(token_map) > 0, 
+                            "latency_ms": latency_ms,
+                            "user_email": request.user_email,
+                            "user_role": request.user_role
+                        }
                     )
                     
                     # Create a span for the full request processing
