@@ -93,8 +93,24 @@ class PHIDetector:
     - Custom NER models
     """
     
-    def __init__(self):
+    # Educational/medical terms that should NOT trigger PHI detection
+    EDUCATIONAL_WHITELIST = {
+        # Common medical education phrases
+        "child paralysis", "children under", "child health", "child development",
+        "patient care", "patient safety", "patient education", "patient outcomes",
+        "parent education", "parent guidance", "parent support",
+        # Medical conditions with "child" in context
+        "child abuse", "child neglect", "child mortality", "child obesity",
+        # General educational terms
+        "pediatric patient", "typical patient", "average patient",
+    }
+    
+    # Minimum confidence threshold for PHI detection (0.0 - 1.0)
+    MIN_CONFIDENCE_THRESHOLD = 0.7
+    
+    def __init__(self, confidence_threshold: float = None):
         self.patterns = self._compile_patterns()
+        self.confidence_threshold = confidence_threshold or self.MIN_CONFIDENCE_THRESHOLD
     
     def _compile_patterns(self) -> Dict[PHIType, List[re.Pattern]]:
         """Compile regex patterns for PHI detection"""
@@ -128,13 +144,56 @@ class PHIDetector:
                 re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b'),
             ],
             PHIType.FULL_NAME: [
-                # Patient name patterns - look for context clues
-                re.compile(r'\b(?:patient|name|child|parent)[:\s]+([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b', re.IGNORECASE),
+                # Patient name patterns - require explicit identifier prefix with colon/is
+                # More strict: requires "patient:", "name:", "patient is", "name is" etc.
+                re.compile(r'\b(?:patient|name)\s*(?::|is|was)\s*([A-Z][a-z]+\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b', re.IGNORECASE),
+                # Direct "Mr./Mrs./Dr." prefix indicates a specific person
+                re.compile(r'\b(?:Mr\.|Mrs\.|Ms\.|Dr\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b'),
             ],
             PHIType.ACCOUNT_NUMBER: [
                 re.compile(r'\b(?:account|acct)[:\s#]*(\d{8,12})\b', re.IGNORECASE),
             ],
         }
+    
+    def _is_whitelisted(self, text: str, match_start: int, match_end: int) -> bool:
+        """Check if the match is part of a whitelisted educational phrase."""
+        # Get surrounding context (50 chars before and after)
+        context_start = max(0, match_start - 50)
+        context_end = min(len(text), match_end + 50)
+        context = text[context_start:context_end].lower()
+        
+        for phrase in self.EDUCATIONAL_WHITELIST:
+            if phrase in context:
+                return True
+        return False
+    
+    def _calculate_confidence(self, phi_type: PHIType, value: str, text: str, start: int, end: int) -> float:
+        """Calculate confidence score for a PHI match based on context."""
+        base_confidence = 0.9
+        
+        # High confidence patterns (exact formats)
+        if phi_type == PHIType.SSN and re.match(r'^\d{3}-\d{2}-\d{4}$', value):
+            return 0.95
+        if phi_type == PHIType.EMAIL and '@' in value:
+            return 0.95
+        if phi_type == PHIType.PHONE and len(re.sub(r'\D', '', value)) == 10:
+            return 0.9
+        
+        # Lower confidence for ambiguous patterns
+        if phi_type == PHIType.ZIP_CODE:
+            # 5-digit numbers are common, lower confidence unless in address context
+            context = text[max(0, start-30):min(len(text), end+30)].lower()
+            if any(word in context for word in ['zip', 'postal', 'address', 'street', 'city']):
+                return 0.85
+            return 0.5  # Low confidence - could be any 5-digit number
+        
+        if phi_type == PHIType.DOB:
+            context = text[max(0, start-20):min(len(text), end+20)].lower()
+            if any(word in context for word in ['dob', 'birth', 'born', 'age']):
+                return 0.9
+            return 0.6  # Could be any date
+        
+        return base_confidence
     
     def detect(self, text: str) -> List[PHIMatch]:
         """
@@ -154,6 +213,22 @@ class PHIDetector:
                     # Get the actual matched value (use group 1 if available, else group 0)
                     value = match.group(1) if match.lastindex else match.group(0)
                     
+                    # Skip if match is part of whitelisted educational phrase
+                    if self._is_whitelisted(text, match.start(), match.end()):
+                        logger.debug("Skipping whitelisted match: %s", value)
+                        continue
+                    
+                    # Calculate confidence based on context
+                    confidence = self._calculate_confidence(
+                        phi_type, value, text, match.start(), match.end()
+                    )
+                    
+                    # Skip low-confidence matches
+                    if confidence < self.confidence_threshold:
+                        logger.debug("Skipping low-confidence match: %s (%.2f < %.2f)", 
+                                   value, confidence, self.confidence_threshold)
+                        continue
+                    
                     # Avoid duplicate detections at same position
                     if not any(m.start == match.start() and m.end == match.end() for m in matches):
                         matches.append(PHIMatch(
@@ -161,7 +236,7 @@ class PHIDetector:
                             value=value,
                             start=match.start(),
                             end=match.end(),
-                            confidence=0.9  # Regex-based detection confidence
+                            confidence=confidence
                         ))
         
         # Sort by position for consistent processing

@@ -1,0 +1,124 @@
+<mxfile host="65bd71144e">
+    <diagram name="AWS Architecture" id="rady-genai-aws">
+        <mxGraphModel dx="648" dy="393" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="Rady Children's GenAI - AWS Architecture" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="20" width="500" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="aws-cloud" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F7F7;strokeColor=#232F3E;strokeWidth=2;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="80" y="80" width="940" height="700" as="geometry"/>
+                </mxCell>
+                <mxCell id="aws-label" value="AWS Cloud (us-east-1)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="100" y="110" width="200" height="10" as="geometry"/>
+                </mxCell>
+                <mxCell id="vpc" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="140" width="860" height="600" as="geometry"/>
+                </mxCell>
+                <mxCell id="vpc-label" value="VPC: rady-genai-vpc (10.0.0.0/16)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#4CAF50;" parent="1" vertex="1">
+                    <mxGeometry x="140" y="150" width="250" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="igw" value="Internet&#10;Gateway" style="shape=mxgraph.aws4.internet_gateway;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#8C4FFF;strokeColor=#5025AA;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="510" y="100" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="users" value="Users&#10;(Doctors, Parents)" style="shape=mxgraph.aws4.users;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#DD344C;strokeColor=#7D222B;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="510" y="10" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#232F3E;" parent="1" source="users" target="igw" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="subnet1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#2196F3;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="160" y="200" width="380" height="500" as="geometry"/>
+                </mxCell>
+                <mxCell id="subnet1-label" value="Public Subnet 1 (us-east-1a)&#10;10.0.1.0/24" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2196F3;" parent="1" vertex="1">
+                    <mxGeometry x="230" y="210" width="180" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="subnet2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E3F2FD;strokeColor=#2196F3;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="560" y="200" width="380" height="500" as="geometry"/>
+                </mxCell>
+                <mxCell id="subnet2-label" value="Public Subnet 2 (us-east-1b)&#10;10.0.2.0/24" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontColor=#2196F3;" parent="1" vertex="1">
+                    <mxGeometry x="570" y="205" width="180" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="alb" value="Application&#10;Load Balancer&#10;(rady-genai-alb)" style="shape=mxgraph.aws4.application_load_balancer;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#8C4FFF;strokeColor=#5025AA;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="490" y="250" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#232F3E;" parent="1" source="igw" target="alb" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ecs-cluster" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#FF9800;strokeWidth=2;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="360" width="700" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="ecs-label" value="ECS Cluster: rady-genai-cluster (Fargate)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#FF9800;" parent="1" vertex="1">
+                    <mxGeometry x="220" y="370" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="frontend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FE;strokeColor=#03A9F4;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="240" y="410" width="200" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="frontend-label" value="Frontend Service" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#03A9F4;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="420" width="120" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="frontend-task" value="ECS Task&#10;(Next.js)&#10;Port 3000" style="shape=mxgraph.aws4.ecs_task;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#ED7100;strokeColor=#805300;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="460" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="frontend-ecr" value="ECR&#10;rady-genai-frontend" style="shape=mxgraph.aws4.ecr_registry;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#ED7100;strokeColor=#805300;fontColor=#232F3E;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="550" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="backend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#4CAF50;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="410" width="200" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="backend-label" value="Backend Service" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#4CAF50;" parent="1" vertex="1">
+                    <mxGeometry x="520" y="420" width="120" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="backend-task" value="ECS Task&#10;(FastAPI)&#10;Port 8000" style="shape=mxgraph.aws4.ecs_task;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#ED7100;strokeColor=#805300;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="460" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="backend-ecr" value="ECR&#10;rady-genai-backend" style="shape=mxgraph.aws4.ecr_registry;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#ED7100;strokeColor=#805300;fontColor=#232F3E;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="550" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="secrets" value="Secrets&#10;Manager&#10;(OpenAI Key)" style="shape=mxgraph.aws4.secrets_manager;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#DD344C;strokeColor=#7D222B;fontColor=#232F3E;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="460" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="cloudwatch" value="CloudWatch&#10;Logs" style="shape=mxgraph.aws4.cloudwatch_2;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#E7157B;strokeColor=#AF0F64;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="550" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="s3" value="S3 Bucket&#10;(Patient Data)" style="shape=mxgraph.aws4.bucket;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#7AA116;strokeColor=#4B6A0A;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="460" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="openai" value="OpenAI API&#10;(GPT-4)" style="shape=mxgraph.aws4.external_sdk;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#232F3E;strokeColor=#000000;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="840" y="550" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-alb-fe" value="Port 3000" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#03A9F4;fontColor=#03A9F4;" parent="1" source="alb" target="frontend-task" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-alb-be" value="Port 80" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#4CAF50;fontColor=#4CAF50;" parent="1" source="alb" target="backend-task" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-be-secrets" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#DD344C;dashed=1;" parent="1" source="backend-task" target="secrets" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-be-openai" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#232F3E;dashed=1;" parent="1" source="backend-task" target="openai" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;" parent="1" vertex="1">
+                    <mxGeometry x="800" y="100" width="160" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-title" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="105" width="60" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend1" value="→ HTTP Traffic" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="130" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend2" value="--→ API Calls" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="150" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend3" value="🟢 Running" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="170" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend4" value="Region: us-east-1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="810" y="190" width="100" height="20" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

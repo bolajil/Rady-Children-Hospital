@@ -67,8 +67,11 @@ def get_langfuse_client() -> Optional["Langfuse"]:
     secret_key = os.getenv("LANGFUSE_SECRET_KEY")
     host = os.getenv("LANGFUSE_HOST", "http://localhost:3001")
     
+    # Debug: Log environment variable status
+    logger.info(f"LangFuse env check: PUBLIC_KEY={'SET' if public_key else 'NOT SET'}, SECRET_KEY={'SET' if secret_key else 'NOT SET'}, HOST={host}")
+    
     if not public_key or not secret_key:
-        logger.info("LangFuse keys not configured. Set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY")
+        logger.warning("LangFuse keys not configured. Set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY")
         return None
     
     try:
@@ -179,10 +182,12 @@ def log_generation(
     output_text: str,
     model: str = "gpt-4",
     metadata: dict = None,
-    session_id: Optional[str] = None
+    session_id: Optional[str] = None,
+    latency_ms: Optional[float] = None,
+    token_usage: Optional[dict] = None
 ) -> Optional[str]:
     """
-    Log a single LLM generation to LangFuse.
+    Log a single LLM generation to LangFuse with enhanced metrics.
     
     Args:
         name: Name for the generation
@@ -191,34 +196,61 @@ def log_generation(
         model: Model name
         metadata: Optional metadata
         session_id: Optional session ID
+        latency_ms: Optional latency in milliseconds
+        token_usage: Optional token usage dict with keys like 'prompt_tokens', 'completion_tokens', 'total_tokens'
         
     Returns:
         Trace ID or None
     """
     client = get_langfuse_client()
     if client is None:
+        logger.warning("LangFuse client is None - traces will not be sent")
         return None
     
     try:
+        logger.info(f"LangFuse: Logging trace '{name}' for session '{session_id}'")
+        # Enrich metadata with performance metrics
+        enriched_metadata = metadata.copy() if metadata else {}
+        if latency_ms is not None:
+            enriched_metadata["latency_ms"] = latency_ms
+        if token_usage:
+            enriched_metadata["token_usage"] = token_usage
+        
         # LangFuse v2 API - use trace() and generation()
         trace = client.trace(
             name=name,
             session_id=session_id,
-            metadata=metadata or {}
+            metadata=enriched_metadata
         )
         
-        trace.generation(
-            name=f"{name}_generation",
-            model=model,
-            input=input_text,
-            output=output_text
-        )
+        # Build generation kwargs with optional usage data
+        generation_kwargs = {
+            "name": f"{name}_generation",
+            "model": model,
+            "input": input_text,
+            "output": output_text,
+        }
+        
+        # Add token usage if available (LangFuse v2 format)
+        if token_usage:
+            generation_kwargs["usage"] = {
+                "prompt_tokens": token_usage.get("prompt_tokens", 0),
+                "completion_tokens": token_usage.get("completion_tokens", 0),
+                "total_tokens": token_usage.get("total_tokens", 0),
+            }
+        
+        # Add latency if available
+        if latency_ms is not None:
+            generation_kwargs["metadata"] = {"latency_ms": latency_ms}
+        
+        trace.generation(**generation_kwargs)
         
         client.flush()
+        logger.info(f"LangFuse: Trace '{trace.id}' flushed successfully")
         return trace.id
         
     except Exception as e:
-        logger.error(f"Failed to log generation: {e}")
+        logger.error(f"Failed to log generation: {e}", exc_info=True)
         return None
 
 

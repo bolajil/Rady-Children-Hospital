@@ -10,18 +10,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Try to import from new API, fallback to old API
+# LangChain 1.0+ uses langgraph for agents
 try:
-    from langchain.agents import create_tool_calling_agent, AgentExecutor
+    from langgraph.prebuilt import create_react_agent
+    LANGGRAPH_AVAILABLE = True
 except ImportError:
-    # Older LangChain version - use different imports
-    try:
-        from langchain.agents import initialize_agent, AgentType
-        from langchain.agents import AgentExecutor
-        create_tool_calling_agent = None  # Will use initialize_agent instead
-    except ImportError:
-        create_tool_calling_agent = None
-        AgentExecutor = None
+    LANGGRAPH_AVAILABLE = False
+    create_react_agent = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -149,74 +144,101 @@ else:
     )
 
     # Create prompt template
-    system_message = """You are a medical assistant AI for Rady Children's Health, a pediatric healthcare facility.
+    system_message = """You are a helpful medical education assistant AI for Rady Children's Health, a pediatric healthcare facility.
 
 Your role:
-- Provide accurate, evidence-based medical information
-- Help clinicians with patient care decisions
-- Assist with medication information and interactions
-- Access clinical guidelines and protocols
+- Provide accurate, evidence-based medical education and information
+- Answer questions about medical conditions, diseases, treatments, and pediatric health
+- Help with medication information and clinical guidelines
+- Assist clinicians and users with general medical knowledge
 
-IMPORTANT GUIDELINES:
-1. **Safety First**: Never provide definitive diagnoses. Always recommend consulting with healthcare providers.
-2. **HIPAA Compliance**: Maintain patient privacy. Log all data access.
-3. **Evidence-Based**: Base responses on current medical literature and guidelines.
-4. **Pediatric Focus**: All recommendations should be appropriate for children.
-5. **Acknowledge Limitations**: Be clear about uncertainties and when to seek specialist input.
+GUIDELINES:
+1. Be helpful and educational - answer questions thoroughly using your medical knowledge
+2. Focus on pediatric health - recommendations should be appropriate for children
+3. Recommend consulting healthcare providers for specific diagnoses or treatment decisions
+4. Base responses on current medical literature and guidelines
 
-Available Tools:
-- patient_info: Look up patient demographic and medical history
-- medication_guide: Get detailed medication information
+Always be helpful, informative, and prioritize patient safety."""
 
-Always prioritize patient safety and quality of care."""
-
-    # Try new API first, fall back to old API
-    if create_tool_calling_agent is not None:
-        # New LangChain API
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_message),
-            MessagesPlaceholder(variable_name="chat_history", optional=True),
-            ("user", "{input}"),
-            MessagesPlaceholder(variable_name="agent_scratchpad"),
-        ])
+    # Simple direct LLM wrapper (works reliably with LangChain 1.0+)
+    from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+    import time
+    
+    # Try to import LangFuse for tracing
+    try:
+        from app.langfuse_integration import get_langfuse_callback, LANGFUSE_AVAILABLE
+        LANGFUSE_AGENT_AVAILABLE = LANGFUSE_AVAILABLE
+    except ImportError:
+        LANGFUSE_AGENT_AVAILABLE = False
+        get_langfuse_callback = None
+    
+    class DirectLLMExecutor:
+        def __init__(self, api_key, tools, system_prompt):
+            self.api_key = api_key
+            self.tools = tools
+            self.system_prompt = system_prompt
         
-        agent = create_tool_calling_agent(llm, tools, prompt)
-        agent_executor = AgentExecutor(
-            agent=agent,
-            tools=tools,
-            verbose=True,
-            handle_parsing_errors=True,
-            max_iterations=3,
-        )
-    else:
-        # Old LangChain API (fallback)
-        try:
-            agent_executor = initialize_agent(
-                tools=tools,
-                llm=llm,
-                agent=AgentType.OPENAI_FUNCTIONS,
-                verbose=True,
-                max_iterations=3,
-                agent_kwargs={
-                    "system_message": system_message,
-                }
-            )
-        except Exception as e:
-            logger.error(f"Failed to initialize agent with old API: {e}")
-            # Ultimate fallback - create a simple wrapper
-            class SimpleAgentExecutor:
-                def __init__(self, llm, tools):
-                    self.llm = llm
-                    self.tools = tools
-                
-                def invoke(self, inputs: dict) -> dict:
-                    from langchain_core.messages import HumanMessage
-                    user_input = inputs.get("input", "")
-                    response = self.llm.invoke([
-                        HumanMessage(content=f"{system_message}\n\nUser: {user_input}")
-                    ])
-                    return {"output": response.content}
+        def invoke(self, inputs: dict, session_id: str = None) -> dict:
+            user_input = inputs.get("input", "")
+            chat_history = inputs.get("chat_history", [])
+            session_id = inputs.get("session_id", session_id)
             
-            agent_executor = SimpleAgentExecutor(llm, tools)
+            # Build callbacks list for LangFuse tracing
+            callbacks = []
+            if LANGFUSE_AGENT_AVAILABLE and get_langfuse_callback:
+                langfuse_cb = get_langfuse_callback(
+                    session_id=session_id,
+                    metadata={"executor": "DirectLLMExecutor", "model": "gpt-4o-mini"}
+                )
+                if langfuse_cb:
+                    callbacks.append(langfuse_cb)
+            
+            # Create fresh LLM instance for each call with callbacks
+            fresh_llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0,
+                api_key=self.api_key,
+                timeout=30,
+                callbacks=callbacks if callbacks else None,
+            )
+            
+            # Build messages with system prompt, history, and user input
+            messages = [SystemMessage(content=self.system_prompt)]
+            
+            # Add chat history if present
+            if chat_history:
+                messages.extend(chat_history)
+            
+            # Add current user message
+            messages.append(HumanMessage(content=user_input))
+            
+            logger.info(f"DirectLLMExecutor: Invoking LLM with {len(messages)} messages")
+            
+            # Track latency
+            start_time = time.time()
+            
+            # Call LLM directly
+            response = fresh_llm.invoke(messages)
+            
+            # Calculate latency
+            latency_ms = (time.time() - start_time) * 1000
+            
+            # Extract token usage if available
+            token_usage = {}
+            if hasattr(response, 'response_metadata'):
+                token_usage = response.response_metadata.get('token_usage', {})
+            elif hasattr(response, 'usage_metadata'):
+                token_usage = response.usage_metadata or {}
+            
+            logger.info(f"DirectLLMExecutor: Response in {latency_ms:.0f}ms, tokens: {token_usage}")
+            
+            return {
+                "output": response.content,
+                "latency_ms": latency_ms,
+                "token_usage": token_usage
+            }
+    
+    agent_executor = DirectLLMExecutor(api_key, tools, system_message)
+    logger.info("Created direct LLM executor")
 
     logger.info("LangChain agent initialized successfully with OpenAI GPT-4")

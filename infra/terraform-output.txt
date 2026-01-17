@@ -1,0 +1,5 @@
+backend_ecr_url = "137738968757.dkr.ecr.us-west-1.amazonaws.com/rady-genai-backend"
+ecs_cluster_arn = "arn:aws:ecs:us-west-1:137738968757:cluster/rady-genai-cluster"
+ecs_cluster_name = "rady-genai-cluster"
+frontend_ecr_url = "137738968757.dkr.ecr.us-west-1.amazonaws.com/rady-genai-frontend"
+vpc_id = "vpc-0e9f3ccad1fea5d8b"

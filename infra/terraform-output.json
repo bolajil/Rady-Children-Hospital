@@ -1,0 +1,27 @@
+{
+  "backend_ecr_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "137738968757.dkr.ecr.us-west-1.amazonaws.com/rady-genai-backend"
+  },
+  "ecs_cluster_arn": {
+    "sensitive": false,
+    "type": "string",
+    "value": "arn:aws:ecs:us-west-1:137738968757:cluster/rady-genai-cluster"
+  },
+  "ecs_cluster_name": {
+    "sensitive": false,
+    "type": "string",
+    "value": "rady-genai-cluster"
+  },
+  "frontend_ecr_url": {
+    "sensitive": false,
+    "type": "string",
+    "value": "137738968757.dkr.ecr.us-west-1.amazonaws.com/rady-genai-frontend"
+  },
+  "vpc_id": {
+    "sensitive": false,
+    "type": "string",
+    "value": "vpc-0e9f3ccad1fea5d8b"
+  }
+}

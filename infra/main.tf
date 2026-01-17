@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1"
 }
 
 # VPC
@@ -13,11 +13,13 @@ resource "aws_vpc" "main" {
 
 # ECR Repositories
 resource "aws_ecr_repository" "backend" {
-  name = "rady-genai-backend"
+  name         = "rady-genai-backend"
+  force_delete = true
 }
 
 resource "aws_ecr_repository" "frontend" {
-  name = "rady-genai-frontend"
+  name         = "rady-genai-frontend"
+  force_delete = true
 }
 
 # ECS Cluster
@@ -26,8 +28,16 @@ resource "aws_ecs_cluster" "main" {
 }
 
 # S3 Bucket for Patient Data (Encrypted)
+# Using unique bucket name with account ID suffix
 resource "aws_s3_bucket" "patient_data" {
-  bucket = "rady-genai-patient-data-${random_id.bucket_suffix.hex}"
+  bucket = "rady-childrens-genai-137738968757"
+  
+  tags = {
+    Name        = "rady-childrens-genai-data"
+    Environment = "production"
+    Project     = "rady-genai"
+    HIPAA       = "true"
+  }
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "patient_data" {
@@ -40,6 +50,3 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "patient_data" {
   }
 }
 
-resource "random_id" "bucket_suffix" {
-  byte_length = 8
-}

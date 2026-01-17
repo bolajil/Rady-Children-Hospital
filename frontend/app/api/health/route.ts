@@ -1,25 +1,17 @@
 export const runtime = 'nodejs';
 
-function getBackendUrl() {
-  if (process.env.BACKEND_URL) return process.env.BACKEND_URL;
-  return 'http://localhost:8000';
-}
-
+// Simple health check - just confirms the frontend is running
+// Does NOT call backend (backend has its own health check on port 80)
 export async function GET() {
-  try {
-    const res = await fetch(`${getBackendUrl()}/health`, {
-      method: 'GET',
+  return new Response(
+    JSON.stringify({ 
+      status: 'healthy', 
+      service: 'frontend',
+      timestamp: new Date().toISOString()
+    }), 
+    {
+      status: 200,
       headers: { 'Content-Type': 'application/json' },
-    });
-    const text = await res.text();
-    return new Response(text, {
-      status: res.status,
-      headers: { 'Content-Type': res.headers.get('Content-Type') || 'application/json' },
-    });
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: 'Proxy error', detail: String(err?.message || err) }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+    }
+  );
 }

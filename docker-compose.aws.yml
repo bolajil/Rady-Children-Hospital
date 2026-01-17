@@ -1,0 +1,41 @@
+# AWS Production Override Configuration
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.aws.yml up -d
+#
+# This file overrides local development settings for AWS ECS/Fargate deployment.
+# Set these environment variables in AWS ECS Task Definition or .env.aws file.
+
+services:
+  backend:
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PYTHONUNBUFFERED=1
+      - MEMORY_TYPE=redis
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - SESSION_TIMEOUT=${SESSION_TIMEOUT:-3600}
+      # LangFuse Configuration for AWS
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_HOST=${LANGFUSE_HOST}
+      # Environment identifier
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    # Remove volume mounts for production
+    volumes: []
+
+  frontend:
+    environment:
+      - NEXT_PUBLIC_API_URL=${BACKEND_PUBLIC_URL}
+      - BACKEND_URL=${BACKEND_INTERNAL_URL:-http://backend:8000}
+      - NODE_ENV=production
+    command: npm start
+    # Remove volume mounts for production
+    volumes: []
+
+  langfuse:
+    environment:
+      - DATABASE_URL=${LANGFUSE_DATABASE_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - SALT=${LANGFUSE_SALT}
+      - NEXTAUTH_URL=${LANGFUSE_PUBLIC_URL}
+      - TELEMETRY_ENABLED=false

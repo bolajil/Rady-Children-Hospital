@@ -12,10 +12,10 @@ services:
       - MEMORY_TYPE=${MEMORY_TYPE:-buffer}
       - REDIS_URL=redis://redis:6379
       - SESSION_TIMEOUT=${SESSION_TIMEOUT:-3600}
-      # LangFuse Configuration
-      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
-      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
-      - LANGFUSE_HOST=http://langfuse:3000
+      # LangFuse Configuration (use env vars for AWS deployment)
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-pk-lf-75f9cc1c-f591-4011-9f8d-61ea69def828}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf-b2ad5f6c-adfa-4371-ad66-c8c13861d2ec}
+      - LANGFUSE_HOST=${LANGFUSE_HOST:-http://langfuse:3000}
       # OpenTelemetry Configuration
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=rady-genai-backend
@@ -59,6 +59,7 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - BACKEND_URL=http://backend:8000
       - NODE_ENV=development
     volumes:
       - ./frontend:/app

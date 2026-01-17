@@ -4,8 +4,8 @@ import type { NextRequest } from 'next/server';
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow public routes (login page) without auth
-  const publicPaths = ['/login'];
+  // Allow public routes without auth (login, health check)
+  const publicPaths = ['/login', '/health', '/api/health'];
   if (publicPaths.includes(pathname)) {
     return NextResponse.next();
   }

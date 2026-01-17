@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,22 +31,22 @@ except ImportError as e:
     PHIBlockedError = Exception
     print(f"PHI Guardrail not available: {e}")
 
-# LangFuse integration for LLM observability
+# LangFuse integration for LLM observability (optional)
+# Store client globally for use in all endpoints
+_langfuse_client = None
 try:
     from app.langfuse_integration import get_langfuse_client, log_generation, LANGFUSE_AVAILABLE
     if LANGFUSE_AVAILABLE:
-        # Initialize client to verify configuration
-        _lf_client = get_langfuse_client()
-        if _lf_client:
+        _langfuse_client = get_langfuse_client()
+        if _langfuse_client:
             print("LangFuse tracing enabled")
         else:
-            print("LangFuse available but not configured (check API keys in .env)")
+            print("LangFuse available but not configured (set LANGFUSE_PUBLIC_KEY and LANGFUSE_SECRET_KEY)")
     else:
         print("LangFuse package not installed")
-except ImportError as e:
+except ImportError:
     LANGFUSE_AVAILABLE = False
     log_generation = None
-    print(f"LangFuse integration not available: {e}")
 
 # Initialize memory manager (using simple storage)
 from app.memory_simple import create_memory_manager, MEMORY_AVAILABLE
@@ -144,6 +147,45 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+@app.get("/langfuse/test")
+async def test_langfuse():
+    """Test endpoint to verify LangFuse connection works."""
+    import traceback
+    
+    if not LANGFUSE_AVAILABLE:
+        return {"status": "error", "message": "LangFuse not available"}
+    if not log_generation:
+        return {"status": "error", "message": "log_generation function not available"}
+    
+    # Direct test using LangFuse client
+    try:
+        from app.langfuse_integration import get_langfuse_client
+        client = get_langfuse_client()
+        if client is None:
+            return {"status": "error", "message": "LangFuse client is None"}
+        
+        # Create trace directly
+        trace = client.trace(
+            name="api_test_direct",
+            session_id="api-test-direct",
+            metadata={"type": "direct_test"}
+        )
+        trace.generation(
+            name="test_generation",
+            model="test",
+            input="Direct test input",
+            output="Direct test output"
+        )
+        client.flush()
+        
+        return {
+            "status": "success", 
+            "trace_id": str(trace.id) if trace.id else "created",
+            "message": "Direct trace sent to LangFuse - check UI now"
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e), "traceback": traceback.format_exc()}
+
 # Feedback endpoint for LLM retraining
 @app.post("/feedback", response_model=FeedbackResponse)
 async def submit_feedback(request: FeedbackRequest):
@@ -170,9 +212,9 @@ async def submit_feedback(request: FeedbackRequest):
     
     feedback_store.append(feedback_entry)
     
-    # Log for monitoring
-    rating_emoji = "👍" if request.rating == "up" else "👎"
-    print(f"[FEEDBACK] {rating_emoji} Rating received - Q: {request.question[:50]}...")
+    # Log for monitoring (use text instead of emoji for Windows console compatibility)
+    rating_text = "[+1]" if request.rating == "up" else "[-1]"
+    print(f"[FEEDBACK] {rating_text} Rating received - Q: {request.question[:50]}...")
     
     return FeedbackResponse(
         success=True,
@@ -221,6 +263,11 @@ async def chat(request: ChatRequest):
                     model_name="gpt-4o-mini",
                     session_id=request.session_id
                 )
+                # Debug logging
+                if safe_query != request.query:
+                    print(f"[PHI DEBUG] Original: {request.query}")
+                    print(f"[PHI DEBUG] Modified: {safe_query}")
+                    print(f"[PHI DEBUG] Token map: {token_map}")
             except PHIBlockedError as e:
                 # Request blocked due to PHI policy - return error to user
                 raise HTTPException(
@@ -235,7 +282,7 @@ async def chat(request: ChatRequest):
             
             # Invoke agent with memory (using safe/redacted query)
             response = agent_executor.invoke(
-                {"input": safe_query, "chat_history": chat_history}
+                {"input": safe_query, "chat_history": chat_history, "session_id": request.session_id}
             )
             
             # Save to memory (store original query for context, safe output)
@@ -246,23 +293,35 @@ async def chat(request: ChatRequest):
                 )
         else:
             # Fallback without memory
-            response = agent_executor.invoke({"input": safe_query})
+            response = agent_executor.invoke({"input": safe_query, "session_id": request.session_id})
         
         # Process output through guardrail (optionally restore tokens)
         output_text = response["output"]
         if PHI_GUARDRAIL_AVAILABLE and token_map:
             output_text = restore_from_llm(output_text, token_map, restore=True)
         
-        # Log to LangFuse for observability
-        if LANGFUSE_AVAILABLE and log_generation:
-            log_generation(
-                name="chat",
-                input_text=safe_query,
-                output_text=output_text,
-                model="gpt-4o-mini",
-                session_id=request.session_id,
-                metadata={"phi_redacted": len(token_map) > 0}
-            )
+        # Extract performance metrics from response
+        latency_ms = response.get("latency_ms")
+        token_usage = response.get("token_usage")
+        
+        # Log to LangFuse for observability (using global client initialized at startup)
+        if LANGFUSE_AVAILABLE and _langfuse_client:
+            try:
+                trace = _langfuse_client.trace(
+                    name="chat",
+                    session_id=request.session_id,
+                    metadata={"phi_redacted": len(token_map) > 0, "latency_ms": latency_ms}
+                )
+                trace.generation(
+                    name="chat_response",
+                    model="gpt-4o-mini",
+                    input=safe_query,
+                    output=output_text,
+                    usage=token_usage if token_usage else None
+                )
+                _langfuse_client.flush()
+            except Exception:
+                pass  # LangFuse logging is optional
         
         return ChatResponse(response=output_text)
     except HTTPException:
@@ -284,6 +343,12 @@ async def chat_stream(request: ChatRequest):
     """
     async def _generator():
         try:
+            import time
+            from datetime import datetime, timezone
+            
+            start_time = datetime.now(timezone.utc)
+            start_ts = time.time()
+            
             # Apply PHI guardrail to protect patient data
             safe_query = request.query
             token_map = {}
@@ -312,21 +377,69 @@ async def chat_stream(request: ChatRequest):
                 response = agent_executor.invoke({"input": safe_query})
 
             text = str(response.get("output", ""))
+            end_time = datetime.now(timezone.utc)
+            latency_ms = int((time.time() - start_ts) * 1000)
             
             # Restore tokens in output if needed
             if PHI_GUARDRAIL_AVAILABLE and token_map:
                 text = restore_from_llm(text, token_map, restore=True)
             
-            # Log to LangFuse for observability
-            if LANGFUSE_AVAILABLE and log_generation:
-                log_generation(
-                    name="chat_stream",
-                    input_text=safe_query,
-                    output_text=text,
-                    model="gpt-4o-mini",
-                    session_id=request.session_id,
-                    metadata={"phi_redacted": len(token_map) > 0}
-                )
+            # Log to LangFuse for observability (using global client initialized at startup)
+            if LANGFUSE_AVAILABLE and _langfuse_client:
+                try:
+                    trace = _langfuse_client.trace(
+                        name="chat_stream",
+                        session_id=request.session_id,
+                        input={"query": safe_query},
+                        output={"response": text[:500]},  # Truncate for display
+                        metadata={"phi_redacted": len(token_map) > 0, "latency_ms": latency_ms}
+                    )
+                    
+                    # Create a span for the full request processing
+                    span = trace.span(
+                        name="request_processing",
+                        start_time=start_time,
+                        end_time=end_time,
+                        input={"query": safe_query},
+                        output={"response_length": len(text)},
+                        metadata={"latency_ms": latency_ms}
+                    )
+                    
+                    # Create generation under the span
+                    generation = span.generation(
+                        name="llm_generation",
+                        model="gpt-4o-mini",
+                        model_parameters={"temperature": 0.7, "max_tokens": 2048},
+                        input=safe_query,
+                        output=text,
+                        start_time=start_time,
+                        end_time=end_time,
+                        completion_start_time=start_time,  # For TTFT calculation
+                        usage={
+                            "input": len(safe_query.split()),
+                            "output": len(text.split()),
+                            "unit": "TOKENS"
+                        },
+                        level="DEFAULT",
+                        status_message="completed"
+                    )
+                    
+                    # End the span explicitly
+                    span.end()
+                    
+                    # Add quality scores for analysis
+                    output_words = len(text.split())
+                    completeness = min(1.0, output_words / 100)
+                    latency_score = max(0, min(1.0, (10000 - latency_ms) / 8000))
+                    phi_safety = 1.0 if not token_map or PHI_GUARDRAIL_AVAILABLE else 0.5
+                    
+                    trace.score(name="completeness", value=completeness, comment=f"{output_words} words")
+                    trace.score(name="latency", value=latency_score, comment=f"{latency_ms}ms response time")
+                    trace.score(name="phi_safety", value=phi_safety, comment="PHI guardrail active" if PHI_GUARDRAIL_AVAILABLE else "No PHI protection")
+                    
+                    _langfuse_client.flush()
+                except Exception:
+                    pass  # LangFuse logging is optional
             
             # Stream in small chunks. Prefer word-boundary chunks for smoother UI
             chunk_size = 40

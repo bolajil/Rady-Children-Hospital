@@ -3,9 +3,11 @@ Simple Conversation Memory Manager for Rady GenAI Agent
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from datetime import datetime
 from dataclasses import dataclass, field
+
+from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
 
 logger = logging.getLogger(__name__)
 
@@ -54,11 +56,22 @@ class MemoryManager:
             logger.info(f"Created new memory for session: {session_id}")
         return self._sessions[session_id]
     
-    def get_conversation_history(self, session_id: str) -> List[SimpleMessage]:
-        """Get conversation history for a session."""
+    def get_conversation_history(self, session_id: str) -> List[BaseMessage]:
+        """Get conversation history for a session as LangChain messages."""
         if session_id not in self._sessions:
             return []
-        return self._sessions[session_id].get_messages()
+        messages = self._sessions[session_id].get_messages()
+        return self._convert_to_langchain_messages(messages)
+    
+    def _convert_to_langchain_messages(self, messages: List[SimpleMessage]) -> List[BaseMessage]:
+        """Convert SimpleMessage objects to LangChain message format."""
+        result = []
+        for msg in messages:
+            if msg.type == "human":
+                result.append(HumanMessage(content=msg.content))
+            elif msg.type == "ai":
+                result.append(AIMessage(content=msg.content))
+        return result
     
     def list_sessions(self) -> List[str]:
         """List all active sessions."""

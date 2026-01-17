@@ -1,4 +1,4 @@
-﻿# Rady Children's GenAI - Demo Guide
+# Rady Children's GenAI - Demo Guide
 
 ## Quick Start Commands
 
@@ -30,6 +30,14 @@ npm run dev
 | Doctor | doctor@example.com | doctorpass |
 | Patient (Emma) | emma.parent@example.com | patient1 |
 | Patient (Liam) | liam.parent@example.com | patient2 |
+
+**Alternative Credentials:**
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@radychildrens.org | admin123 |
+| Doctor | dr.smith@radychildrens.org | doctor123 |
+| Nurse | nurse.jones@radychildrens.org | nurse123 |
 
 ---
 
@@ -201,75 +209,104 @@ npm run dev
 
 ## Backend API Test Commands
 
+> **Tip:** Use the Swagger UI at http://localhost:8000/docs to test endpoints with the JSON bodies below.
+
 ### Test Chat Endpoint
+**Endpoint:** `POST /chat`
+
+**JSON Body:**
+```json
+{
+  "query": "What is the correct acetaminophen dose for a 25-pound toddler?",
+  "session_id": "demo-001"
+}
+```
+
+**curl (Linux/Mac):**
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"query": "What is the correct acetaminophen dose for a 25-pound toddler?", "session_id": "demo-001"}'
 ```
 
+---
+
 ### Test Streaming Chat
+**Endpoint:** `POST /chat/stream`
+
+Stream the assistant's response incrementally. This is a best-effort stream:
+- If conversation memory is available, it's used as in the `/chat` endpoint.
+- If the underlying LLM/agent doesn't support server-side streaming via callbacks in the current environment, we chunk the final text to simulate token streaming.
+
+**JSON Body:**
+```json
+{
+  "query": "What are the signs of an ear infection in toddlers?",
+  "session_id": "demo-001"
+}
+```
+
+**curl (Linux/Mac):**
 ```bash
 curl -X POST http://localhost:8000/chat/stream \
   -H "Content-Type: application/json" \
   -d '{"query": "What are the signs of an ear infection in toddlers?", "session_id": "demo-001"}'
 ```
 
+---
+
 ### Test Feedback Endpoint
-```bash
-# Submit positive feedback
-curl -X POST http://localhost:8000/feedback \
-  -H "Content-Type: application/json" \
-  -d '{
-    "conversation_id": "demo-001",
-    "message_index": 1,
-    "question": "What is the correct acetaminophen dose for a 25-pound toddler?",
-    "answer": "For a 25-pound toddler, the recommended acetaminophen dose is...",
-    "rating": "up",
-    "timestamp": "2024-12-03T10:00:00Z"
-  }'
+**Endpoint:** `POST /feedback`
 
-# Submit negative feedback
-curl -X POST http://localhost:8000/feedback \
-  -H "Content-Type: application/json" \
-  -d '{
-    "conversation_id": "demo-002",
-    "message_index": 1,
-    "question": "Can I give my child adult medication?",
-    "answer": "Some response that was not helpful...",
-    "rating": "down",
-    "timestamp": "2024-12-03T10:05:00Z"
-  }'
-
-# Get all feedback
-curl http://localhost:8000/feedback
+**JSON Body (Positive Feedback):**
+```json
+{
+  "conversation_id": "demo-001",
+  "message_index": 1,
+  "question": "What is the correct acetaminophen dose for a 25-pound toddler?",
+  "answer": "For a 25-pound toddler, the recommended acetaminophen dose is...",
+  "rating": "up",
+  "timestamp": "2024-12-03T10:00:00Z"
+}
 ```
+
+**JSON Body (Negative Feedback):**
+```json
+{
+  "conversation_id": "demo-002",
+  "message_index": 1,
+  "question": "Can I give my child adult medication?",
+  "answer": "Some response that was not helpful...",
+  "rating": "down",
+  "timestamp": "2024-12-03T10:05:00Z"
+}
+```
+
+**Get All Feedback:** `GET /feedback` (no body needed)
+
+---
 
 ### Test Health Endpoint
-```bash
-curl http://localhost:8000/health
-```
+**Endpoint:** `GET /health` (no body needed)
+
+---
 
 ### Test EHR Endpoints
-```bash
-# Get all patients
-curl http://localhost:8000/ehr/patients
 
-# Get specific patient
-curl http://localhost:8000/ehr/patients/P001
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/ehr/patients` | Get all patients |
+| GET | `/ehr/patients/P001` | Get specific patient |
+| GET | `/ehr/patients/search?query=emma` | Search patients |
 
-# Search patients
-curl "http://localhost:8000/ehr/patients/search?query=emma"
-```
+---
 
 ### Test Appointments
-```bash
-# Get appointments
-curl http://localhost:8000/appointments
 
-# Get appointments for specific patient
-curl http://localhost:8000/appointments/patient/P001
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/appointments` | Get all appointments |
+| GET | `/appointments/patient/P001` | Get appointments for patient |
 
 ---
 
@@ -456,87 +493,53 @@ BACKEND_URL=http://127.0.0.1:8000
 - [ ] Mobile view is functional
 - [ ] No console errors
 - [ ] HIPAA badge is visible
-- [ ] HIPAA Compliance dashboard accessible (owner only)
 
 ---
 
-## 🛡️ HIPAA Compliance Demo
+## Healthcare LLM Enhancement System
 
-### Accessing the Compliance Dashboard
+> **New Addition:** A complete RAG-based treatment planning system has been added to enhance the Rady GenAI capabilities.
 
-1. Login as **owner** (`owner@example.com` / `ownerpass`)
-2. Click **"HIPAA Compliance"** in the sidebar
-3. View the compliance dashboard
+### Documentation Files Added
 
-### Demo the Violation Detection
+| File | Location | Description |
+|------|----------|-------------|
+| `HEALTHCARE_LLM_KNOWLEDGE_BASE.md` | rady-genai/ | Complete 24KB guide for RAG + LLM healthcare system |
+| `healthcare-llm-implementation/` | rady-genai/ | 6 Python implementation scripts |
 
-1. Click **"Generate Sample Events (Demo)"** button
-2. Show the **Summary Cards**:
-   - Total Events count
-   - Violations detected (highlighted in red)
-   - Active Users today
-   - Compliance Status
+### Implementation Steps
 
-3. Show **Violations by Severity**:
-   - Critical (red) - Most severe, immediate action needed
-   - High (orange) - Serious concern
-   - Medium (yellow) - Needs review
-   - Low (blue) - Minor concerns
+```powershell
+# Navigate to implementation folder
+cd ~/.gemini/antigravity/scratch/rady-genai/healthcare-llm-implementation
 
-4. Click through the **Tabs**:
-   - **Overview** - Recent activity feed
-   - **Violations** - All detected violations with details
-   - **Audit Log** - Full table of all PHI access events
+# Step 1: Generate synthetic patients (50 patients)
+python 01_generate_patients.py
 
-### Types of Violations Detected
+# Step 2: Create clinical guidelines
+python 02_create_guidelines.py
 
-| Violation | When It Triggers |
-|-----------|------------------|
-| **Unauthorized Access** | Invalid credentials or permissions |
-| **After-Hours Access** | PHI access outside 7 AM - 7 PM |
-| **Bulk Data Access** | Accessing 10+ patients in 10 minutes |
-| **Excessive Queries** | More than 20 accesses per hour |
-| **Cross-Patient Access** | Patient viewing another patient's data |
+# Step 3: Build RAG embeddings
+python 03_build_rag.py
 
-### What Gets Logged
+# Step 4: Generate treatment plans
+python 04_orchestrator.py
 
-Every PHI access is automatically tracked:
-- **Who** accessed the data (user email, role)
-- **What** was accessed (patient ID, record type)
-- **When** (timestamp)
-- **Where** (IP address in production)
-- **Whether** it was a violation
+# Step 5: Run safety guardrails
+python 05_guardrails.py
 
-### API Endpoints (Admin Only)
-
-```bash
-# Get compliance summary
-curl http://localhost:8000/compliance/summary \
-  -H "Authorization: Bearer <admin_token>"
-
-# Get all violations
-curl http://localhost:8000/compliance/violations \
-  -H "Authorization: Bearer <admin_token>"
-
-# Get full audit log
-curl http://localhost:8000/compliance/audit-log \
-  -H "Authorization: Bearer <admin_token>"
-
-# Get access log for specific patient
-curl http://localhost:8000/compliance/patient/P001/access-log \
-  -H "Authorization: Bearer <admin_token>"
+# Step 6: Evaluate quality
+python 06_evaluation.py
 ```
 
----
+### Standalone Project Location
+Full tested implementation is also available at:
+```
+C:\Users\bolaf\CascadeProjects\healthcare-llm-guide\
+```
 
-## 🚀 Production Implementation Notes
-
-For production deployment, the HIPAA system needs:
-
-1. **Database Storage** - Replace in-memory with PostgreSQL
-2. **Immutable Logs** - Append-only tables with triggers
-3. **Email Alerts** - Notify on critical violations
-4. **6-Year Retention** - HIPAA requirement
-5. **Encryption** - AES-256 at rest, TLS 1.3 in transit
-
-See `README.md` → "HIPAA Compliance Implementation" section for full details.
+### Key Features
+- **RAG Architecture:** Patient data stays in DB, not in model weights
+- **Safety Guardrails:** 10 clinical safety rules
+- **Evaluation Harness:** Measures guideline consistency, safety, completeness
+- **Mock LLM Mode:** Works without API keys for testing
