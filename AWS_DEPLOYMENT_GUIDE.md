@@ -267,9 +267,16 @@ To deploy self-hosted LangFuse for LLM observability, create a `terraform.tfvars
 
 ```bash
 cd ~/.gemini/antigravity/scratch/rady-genai/infra
-cat > terraform.tfvars << EOF
-langfuse_enabled = true
-EOF
+```
+
+**Git Bash / Linux / Mac:**
+```bash
+echo 'langfuse_enabled = true' > terraform.tfvars
+```
+
+**PowerShell:**
+```powershell
+Set-Content -Path terraform.tfvars -Value 'langfuse_enabled = true'
 ```
 
 This will deploy:
@@ -281,6 +288,7 @@ This will deploy:
 
 ```bash
 cd ~/.gemini/antigravity/scratch/rady-genai/infra
+terraform init   # Only needed if not done in Step 3
 terraform apply
 ```
 
