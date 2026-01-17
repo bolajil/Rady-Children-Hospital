@@ -100,6 +100,25 @@
                 <mxCell id="arrow-be-openai" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#232F3E;dashed=1;" parent="1" source="backend-task" target="openai" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
+                <!-- LangFuse Service -->
+                <mxCell id="langfuse-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#9C27B0;strokeWidth=1;" parent="1" vertex="1">
+                    <mxGeometry x="720" y="410" width="200" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="langfuse-label" value="LangFuse Service (Observability)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#9C27B0;" parent="1" vertex="1">
+                    <mxGeometry x="740" y="420" width="160" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="langfuse-task" value="ECS Task&#10;(LangFuse)&#10;Port 3001" style="shape=mxgraph.aws4.ecs_task;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#ED7100;strokeColor=#805300;fontColor=#232F3E;" parent="1" vertex="1">
+                    <mxGeometry x="790" y="460" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="langfuse-rds" value="RDS&#10;PostgreSQL&#10;(LangFuse DB)" style="shape=mxgraph.aws4.rds_instance;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=#ffffff;outlineConnect=0;aspect=fixed;fillColor=#C925D1;strokeColor=#7D1786;fontColor=#232F3E;fontSize=9;" parent="1" vertex="1">
+                    <mxGeometry x="790" y="550" width="60" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-be-langfuse" value="Traces" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#9C27B0;dashed=1;fontColor=#9C27B0;" parent="1" source="backend-task" target="langfuse-task" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arrow-alb-langfuse" value="Port 3001" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#9C27B0;fontColor=#9C27B0;" parent="1" source="alb" target="langfuse-task" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
                 <mxCell id="legend-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#CCCCCC;" parent="1" vertex="1">
                     <mxGeometry x="800" y="100" width="160" height="120" as="geometry"/>
                 </mxCell>
