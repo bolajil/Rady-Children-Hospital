@@ -11,10 +11,10 @@ Complete step-by-step guide to deploy the Rady GenAI application to AWS.
 
 | Service | URL |
 |---------|-----|
-| **Frontend** | http://rady-genai-alb-565630.us-east-1.elb.amazonaws.com:3000 |
-| **Backend API** | http://rady-genai-alb-565630.us-east-1.elb.amazonaws.com |
-| **API Docs** | http://rady-genai-alb-565630.us-east-1.elb.amazonaws.com/docs |
-| **LangFuse** | http://rady-genai-alb-565630.us-east-1.elb.amazonaws.com:3001 |
+| **Frontend** | http://rady-genai-alb-443036289.us-east-1.elb.amazonaws.com:3000 |
+| **Backend API** | http://rady-genai-alb-443036289.us-east-1.elb.amazonaws.com |
+| **API Docs** | http://rady-genai-alb-443036289.us-east-1.elb.amazonaws.com/docs |
+| **LangFuse (Cloud)** | https://us.cloud.langfuse.com |
 
 ### Demo Credentials
 | Role | Email | Password |
