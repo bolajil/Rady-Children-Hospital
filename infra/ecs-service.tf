@@ -259,7 +259,20 @@ resource "aws_ecs_task_definition" "backend" {
           protocol      = "tcp"
         }
       ]
-      environment = []
+      environment = [
+        {
+          name  = "LANGFUSE_PUBLIC_KEY"
+          value = "pk-lf-4a55ecce-af28-4f39-82f8-474bfa30b44d"
+        },
+        {
+          name  = "LANGFUSE_SECRET_KEY"
+          value = "sk-lf-b035812a-4185-42f7-955f-12d00fba19fe"
+        },
+        {
+          name  = "LANGFUSE_HOST"
+          value = "https://us.cloud.langfuse.com"
+        }
+      ]
       secrets = [
         {
           name      = "OPENAI_API_KEY"

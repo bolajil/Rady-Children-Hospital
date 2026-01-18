@@ -231,7 +231,7 @@ aws secretsmanager put-secret-value \
   --secret-string "sk-your-actual-openai-api-key" \
   --region us-east-1
 ```
-
+aws secretsmanager get-secret-value --secret-id rady-genai/openai-api-key --region us-east-1
 ### 6.2 Create LangFuse API Keys Secret (LLM Observability)
 
 LangFuse provides observability for LLM calls including latency, token usage, and quality scores.

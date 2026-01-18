@@ -25,6 +25,33 @@ resource "aws_subnet" "private_2" {
   }
 }
 
+# Route table for private subnets (local VPC routing only)
+resource "aws_route_table" "private" {
+  count  = var.langfuse_enabled ? 1 : 0
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "10.0.0.0/16"
+    gateway_id = "local"
+  }
+
+  tags = {
+    Name = "${var.project_name}-private-rt"
+  }
+}
+
+resource "aws_route_table_association" "private_1" {
+  count          = var.langfuse_enabled ? 1 : 0
+  subnet_id      = aws_subnet.private_1[0].id
+  route_table_id = aws_route_table.private[0].id
+}
+
+resource "aws_route_table_association" "private_2" {
+  count          = var.langfuse_enabled ? 1 : 0
+  subnet_id      = aws_subnet.private_2[0].id
+  route_table_id = aws_route_table.private[0].id
+}
+
 # DB Subnet Group
 resource "aws_db_subnet_group" "langfuse" {
   count      = var.langfuse_enabled ? 1 : 0
@@ -33,6 +60,32 @@ resource "aws_db_subnet_group" "langfuse" {
 
   tags = {
     Name = "${var.project_name}-langfuse-db-subnet"
+  }
+}
+
+# Security Group for LangFuse ECS Task (defined before DB SG to avoid circular dependency)
+resource "aws_security_group" "langfuse_ecs" {
+  count       = var.langfuse_enabled ? 1 : 0
+  name        = "${var.project_name}-langfuse-ecs-sg"
+  description = "Security group for LangFuse ECS task"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-langfuse-ecs-sg"
   }
 }
 
@@ -47,7 +100,7 @@ resource "aws_security_group" "langfuse_db" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_tasks.id]
+    security_groups = [aws_security_group.langfuse_ecs[0].id]
   }
 
   egress {
@@ -67,7 +120,7 @@ resource "aws_db_instance" "langfuse" {
   count                  = var.langfuse_enabled ? 1 : 0
   identifier             = "${var.project_name}-langfuse-db"
   engine                 = "postgres"
-  engine_version         = "15.4"
+  engine_version         = "15"
   instance_class         = var.langfuse_db_instance_class
   allocated_storage      = var.langfuse_db_allocated_storage
   storage_type           = "gp2"
@@ -124,32 +177,6 @@ resource "aws_secretsmanager_secret_version" "langfuse" {
   })
 }
 
-# Security Group for LangFuse ECS Task
-resource "aws_security_group" "langfuse_ecs" {
-  count       = var.langfuse_enabled ? 1 : 0
-  name        = "${var.project_name}-langfuse-ecs-sg"
-  description = "Security group for LangFuse ECS task"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    from_port       = 3000
-    to_port         = 3000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.project_name}-langfuse-ecs-sg"
-  }
-}
-
 # CloudWatch Log Group for LangFuse
 resource "aws_cloudwatch_log_group" "langfuse" {
   count             = var.langfuse_enabled ? 1 : 0
@@ -167,8 +194,8 @@ resource "aws_ecs_task_definition" "langfuse" {
   family                   = "${var.project_name}-langfuse"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"
-  memory                   = "1024"
+  cpu                      = "1024"
+  memory                   = "2048"
   execution_role_arn       = aws_iam_role.ecs_task_execution.arn
 
   container_definitions = jsonencode([
@@ -233,13 +260,13 @@ resource "aws_lb_target_group" "langfuse" {
   health_check {
     enabled             = true
     healthy_threshold   = 2
-    interval            = 30
+    interval            = 60
     matcher             = "200-399"
-    path                = "/api/public/health"
+    path                = "/"
     port                = "traffic-port"
     protocol            = "HTTP"
-    timeout             = 10
-    unhealthy_threshold = 3
+    timeout             = 30
+    unhealthy_threshold = 5
   }
 
   tags = {
@@ -269,7 +296,7 @@ resource "aws_ecs_service" "langfuse" {
   desired_count   = 1
   launch_type     = "FARGATE"
 
-  health_check_grace_period_seconds = 120
+  health_check_grace_period_seconds = 300
 
   network_configuration {
     subnets          = [aws_subnet.public_1.id, aws_subnet.public_2.id]
