@@ -20,6 +20,10 @@ services:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
       - OTEL_SERVICE_NAME=rady-genai-backend
       - OTEL_ENABLED=${OTEL_ENABLED:-false}
+      # RAG Configuration
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - RAG_ENABLED=${RAG_ENABLED:-true}
     volumes:
       - ./backend:/app
       - backend_data:/app/data
@@ -69,6 +73,24 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - rady-network
+
+  # ==================== CHROMADB (Vector Database for RAG) ====================
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - rady-network
 
@@ -165,6 +187,8 @@ volumes:
   backend_data:
     driver: local
   redis_data:
+    driver: local
+  chroma_data:
     driver: local
   langfuse_postgres_data:
     driver: local

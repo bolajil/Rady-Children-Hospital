@@ -79,6 +79,17 @@ except Exception as e:
     COMPLIANCE_ROUTER_AVAILABLE = False
     print(f"Compliance router not available: {e}")
 
+# Secure RAG router
+try:
+    from app.rag_routes import router as rag_router
+    from app.secure_rag import get_secure_rag, retrieve_context_for_query
+    RAG_ROUTER_AVAILABLE = True
+    print("Secure RAG router available")
+except Exception as e:
+    RAG_ROUTER_AVAILABLE = False
+    rag_router = None
+    print(f"Secure RAG router not available: {e}")
+
 app = FastAPI(title="Rady Children's GenAI Agent")
 
 # CORS configuration
@@ -278,6 +289,8 @@ app.include_router(ehr.router)
 app.include_router(appointments.router)
 if COMPLIANCE_ROUTER_AVAILABLE:
     app.include_router(compliance.router)
+if RAG_ROUTER_AVAILABLE and rag_router:
+    app.include_router(rag_router)
 
 # Chat endpoint
 @app.post("/chat", response_model=ChatResponse)
@@ -314,6 +327,29 @@ async def chat(request: ChatRequest):
                     detail=str(e)
                 )
         
+        # Retrieve RAG context if available (PHI is redacted in retrieved content)
+        rag_context = ""
+        if RAG_ROUTER_AVAILABLE:
+            try:
+                rag_context, rag_token_map = retrieve_context_for_query(safe_query, n_results=3)
+                if rag_context:
+                    token_map.update(rag_token_map)  # Merge token maps
+                    print(f"[RAG] Retrieved context: {len(rag_context)} chars")
+            except Exception as e:
+                print(f"[RAG] Context retrieval failed: {e}")
+        
+        # Augment query with RAG context if available
+        augmented_query = safe_query
+        if rag_context:
+            augmented_query = f"""Use the following relevant medical context to help answer the question.
+
+CONTEXT:
+{rag_context}
+
+QUESTION: {safe_query}
+
+Answer based on the context provided. If the context doesn't contain relevant information, use your general medical knowledge."""
+        
         # Get memory for this session (with user tracking)
         if MEMORY_AVAILABLE and memory_manager:
             memory = memory_manager.get_memory(
@@ -323,9 +359,9 @@ async def chat(request: ChatRequest):
             )
             chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
             
-            # Invoke agent with memory (using safe/redacted query)
+            # Invoke agent with memory (using augmented query with RAG context)
             response = agent_executor.invoke(
-                {"input": safe_query, "chat_history": chat_history, "session_id": request.session_id}
+                {"input": augmented_query, "chat_history": chat_history, "session_id": request.session_id}
             )
             
             # Save to memory (store original query for context, safe output)
@@ -407,6 +443,28 @@ async def chat_stream(request: ChatRequest):
                     yield f"[error] {str(e)}\n"
                     return
             
+            # Retrieve RAG context if available (PHI is redacted in retrieved content)
+            rag_context = ""
+            if RAG_ROUTER_AVAILABLE:
+                try:
+                    rag_context, rag_token_map = retrieve_context_for_query(safe_query, n_results=3)
+                    if rag_context:
+                        token_map.update(rag_token_map)
+                except Exception:
+                    pass  # RAG is optional
+            
+            # Augment query with RAG context if available
+            augmented_query = safe_query
+            if rag_context:
+                augmented_query = f"""Use the following relevant medical context to help answer the question.
+
+CONTEXT:
+{rag_context}
+
+QUESTION: {safe_query}
+
+Answer based on the context provided. If the context doesn't contain relevant information, use your general medical knowledge."""
+            
             # Get memory and chat history if available (with user tracking)
             if MEMORY_AVAILABLE and memory_manager:
                 memory = memory_manager.get_memory(
@@ -416,7 +474,7 @@ async def chat_stream(request: ChatRequest):
                 )
                 chat_history = memory_manager.get_conversation_history(request.session_id) if memory else []
                 response = agent_executor.invoke(
-                    {"input": safe_query, "chat_history": chat_history}
+                    {"input": augmented_query, "chat_history": chat_history}
                 )
                 if memory:
                     memory.save_context({"input": request.query}, {"output": response["output"]})
