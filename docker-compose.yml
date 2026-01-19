@@ -5,7 +5,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    user: root
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONUNBUFFERED=1
@@ -17,7 +16,7 @@ services:
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-sk-lf-b2ad5f6c-adfa-4371-ad66-c8c13861d2ec}
       - LANGFUSE_HOST=${LANGFUSE_HOST:-http://langfuse:3000}
       # OpenTelemetry Configuration
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
       - OTEL_SERVICE_NAME=rady-genai-backend
       - OTEL_ENABLED=${OTEL_ENABLED:-false}
       # RAG Configuration
@@ -27,7 +26,7 @@ services:
     volumes:
       - ./backend:/app
       - backend_data:/app/data
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s

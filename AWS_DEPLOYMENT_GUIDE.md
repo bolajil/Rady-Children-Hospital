@@ -35,6 +35,50 @@ Before starting, ensure you have:
 
 ---
 
+## 📋 Deployment TODO Checklist
+
+### Phase 1: Infrastructure Setup
+- [ ] Install AWS CLI and configure credentials
+- [ ] Install Terraform
+- [ ] Clone the repository
+- [ ] Create `.env` file with required variables
+
+### Phase 2: AWS Resources
+- [ ] Create ECR repositories (backend, frontend)
+- [ ] Build and push Docker images to ECR
+- [ ] Create VPC and networking resources
+- [ ] Create ECS cluster
+- [ ] Store secrets in AWS Secrets Manager
+
+### Phase 3: Deploy Services
+- [ ] Deploy backend ECS service
+- [ ] Deploy frontend ECS service
+- [ ] Configure Application Load Balancer
+- [ ] Verify health checks pass
+
+### Phase 4: Monitoring Setup
+- [ ] Enable `OTEL_ENABLED=true` in task definition
+- [ ] Configure CloudWatch log groups
+- [ ] Set up LangFuse Cloud for LLM observability
+- [ ] Create CloudWatch alarms for critical metrics
+- [ ] Test distributed tracing (verify traces in LangFuse)
+
+### Phase 5: Verification
+- [ ] Test frontend at ALB URL:3000
+- [ ] Test backend health at ALB URL/health
+- [ ] Test chat functionality
+- [ ] Verify LangFuse receives traces
+- [ ] Check CloudWatch logs for errors
+
+### Phase 6: Production Hardening (Optional)
+- [ ] Enable HTTPS with ACM certificate
+- [ ] Configure custom domain (Route 53)
+- [ ] Set up auto-scaling policies
+- [ ] Enable AWS WAF for security
+- [ ] Configure backup for any databases
+
+---
+
 ## STEP 1: Install Required Tools
 
 ### 1.1 Install AWS CLI
@@ -542,6 +586,60 @@ aws logs tail //ecs/rady-backend --region us-east-1 --follow
 # Destroy all resources
 terraform destroy
 ```
+
+---
+
+## Monitoring & Observability (AWS)
+
+### Environment Variables for Monitoring
+
+Add these to your ECS task definitions or Secrets Manager:
+
+```env
+# Enable OpenTelemetry tracing
+OTEL_ENABLED=true
+OTEL_SERVICE_NAME=rady-genai-backend
+OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+```
+
+### CloudWatch Logs
+
+View application logs:
+```bash
+# Backend logs
+aws logs tail /ecs/rady-backend --region us-east-1 --follow
+
+# Frontend logs
+aws logs tail /ecs/rady-frontend --region us-east-1 --follow
+```
+
+### LangFuse (LLM Observability)
+
+For AWS deployment, use LangFuse Cloud:
+1. Sign up at https://cloud.langfuse.com
+2. Create a project and get API keys
+3. Add to Secrets Manager:
+   - `LANGFUSE_PUBLIC_KEY`
+   - `LANGFUSE_SECRET_KEY`
+   - `LANGFUSE_HOST=https://cloud.langfuse.com`
+
+### AWS X-Ray (Alternative to Jaeger)
+
+For production AWS deployments, consider AWS X-Ray:
+```bash
+# Enable X-Ray in ECS task definition
+aws ecs update-service --cluster rady-genai-cluster \
+  --service rady-genai-backend-service \
+  --enable-execute-command
+```
+
+### CloudWatch Metrics
+
+Monitor these metrics in CloudWatch:
+- `ECS/CPUUtilization` - Container CPU usage
+- `ECS/MemoryUtilization` - Container memory usage
+- `ALB/RequestCount` - Request throughput
+- `ALB/TargetResponseTime` - API latency
 
 ---
 

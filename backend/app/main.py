@@ -92,6 +92,15 @@ except Exception as e:
 
 app = FastAPI(title="Rady Children's GenAI Agent")
 
+# OpenTelemetry tracing (for Jaeger)
+try:
+    from app.telemetry import setup_telemetry
+    tracer = setup_telemetry(app, service_name="rady-genai-backend")
+    if tracer:
+        print("OpenTelemetry tracing enabled - sending to Jaeger")
+except Exception as e:
+    print(f"OpenTelemetry not available: {e}")
+
 # CORS configuration
 # Allow local dev plus configurable frontend origins (e.g., Vercel domain)
 frontend_origins_env = os.getenv("FRONTEND_ORIGINS", "")

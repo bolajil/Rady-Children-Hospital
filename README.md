@@ -156,6 +156,111 @@ After editing, restart the frontend dev server for changes to reflect.
 - **DockerHub** - Image registry (bolajil/rady-*)
 - **GitHub** - Source control
 
+### Observability Stack
+- **OpenTelemetry** - Distributed tracing instrumentation
+- **Jaeger** - Trace visualization and analysis
+- **Prometheus** - Metrics collection and alerting
+- **Grafana** - Metrics dashboards and visualization
+- **LangFuse** - LLM-specific observability (tokens, costs, prompts)
+
+---
+
+## 📈 Monitoring & Observability
+
+The application includes a full observability stack for monitoring API performance, LLM usage, and distributed tracing.
+
+### Quick Access URLs (Local Development)
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Frontend** | http://localhost:3000 | Main application |
+| **Backend API** | http://localhost:8000 | API endpoints |
+| **Swagger Docs** | http://localhost:8000/docs | API documentation |
+| **Jaeger** | http://localhost:16686 | Distributed tracing |
+| **Grafana** | http://localhost:3002 | Metrics dashboards |
+| **Prometheus** | http://localhost:9090 | Raw metrics queries |
+| **LangFuse** | http://localhost:3001 | LLM observability |
+
+### Enabling OpenTelemetry Tracing
+
+Set in your `.env` file or docker-compose environment:
+
+```env
+OTEL_ENABLED=true
+```
+
+### Using Jaeger (Distributed Tracing)
+
+**Access:** http://localhost:16686
+
+1. **Select Service:** Choose `rady-genai-backend` from the dropdown
+2. **Find Traces:** Click "Find Traces" to see all requests
+3. **Analyze:** Click on any trace to see:
+   - Request duration and latency breakdown
+   - Span details for each operation
+   - Error information if any
+
+**What Jaeger Shows:**
+- API request flow through the system
+- Time spent in each operation (database, LLM calls, etc.)
+- Error traces and exceptions
+- Service dependencies
+
+### Using Grafana (Metrics Dashboards)
+
+**Access:** http://localhost:3002
+**Login:** `admin` / `admin`
+
+1. **Skip password change** (or set a new one)
+2. **Navigate to Dashboards** → Browse
+3. **View pre-configured dashboards** for:
+   - API request rates and latency
+   - Error rates by endpoint
+   - System resource usage
+
+**Creating Custom Dashboards:**
+1. Click **"+"** → **"New Dashboard"**
+2. Add a panel → Select **Prometheus** as data source
+3. Use PromQL queries like:
+   - `rate(http_requests_total[5m])` - Request rate
+   - `histogram_quantile(0.95, http_request_duration_seconds_bucket)` - P95 latency
+
+### Using Prometheus (Metrics Queries)
+
+**Access:** http://localhost:9090
+
+1. **Enter a query** in the search box
+2. Click **"Execute"**
+3. View results in **Table** or **Graph** view
+
+**Useful Queries:**
+```promql
+# Check all monitored services
+up
+
+# Request rate per endpoint
+rate(http_requests_total[5m])
+
+# 95th percentile latency
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Error rate
+rate(http_requests_total{status=~"5.."}[5m])
+```
+
+### Using LangFuse (LLM Observability)
+
+**Access:** http://localhost:3001
+
+1. **Sign up** for a new account (first time only)
+2. **Create a project**
+3. **Send chat messages** in the app
+4. **View traces** showing:
+   - Prompt/response pairs
+   - Token usage and costs
+   - Latency per LLM call
+   - Model parameters
+
 ---
 
 ## 📊 API Endpoints
@@ -332,12 +437,20 @@ python load_documents.py --watch
 
 ### Environment Variables
 
-Create `backend/.env`:
+Create `.env` in the project root:
 ```env
+# Required
 OPENAI_API_KEY=sk-your-actual-key-here
+
+# Monitoring (Optional - enables Jaeger tracing)
+OTEL_ENABLED=true
+
+# Memory Configuration
+MEMORY_TYPE=buffer
+SESSION_TIMEOUT=3600
 ```
 
-Without this key:
+Without the OpenAI key:
 - Agent runs in **mock mode** with limited functionality
 - RAG embeddings will not work
 - Get your key: https://platform.openai.com/api-keys
