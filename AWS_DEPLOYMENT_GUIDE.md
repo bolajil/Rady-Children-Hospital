@@ -591,15 +591,73 @@ terraform destroy
 
 ## Monitoring & Observability (AWS)
 
-### Environment Variables for Monitoring
+The backend includes built-in AWS monitoring support with **CloudWatch** and **X-Ray**.
 
-Add these to your ECS task definitions or Secrets Manager:
+### Enable AWS Monitoring
+
+Add these environment variables to your ECS task definition:
 
 ```env
-# Enable OpenTelemetry tracing
-OTEL_ENABLED=true
-OTEL_SERVICE_NAME=rady-genai-backend
-OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
+# Enable AWS CloudWatch + X-Ray monitoring
+AWS_MONITORING_ENABLED=true
+AWS_REGION=us-east-1
+SERVICE_NAME=rady-genai-backend
+
+# X-Ray daemon address (use sidecar container or daemon)
+XRAY_DAEMON_ADDRESS=127.0.0.1:2000
+```
+
+### X-Ray Sidecar Container
+
+Add the X-Ray daemon as a sidecar in your ECS task definition:
+
+```json
+{
+  "name": "xray-daemon",
+  "image": "amazon/aws-xray-daemon",
+  "cpu": 32,
+  "memoryReservation": 256,
+  "portMappings": [
+    {
+      "containerPort": 2000,
+      "protocol": "udp"
+    }
+  ],
+  "essential": false
+}
+```
+
+### IAM Permissions for Monitoring
+
+Add these permissions to your ECS task role:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords",
+        "xray:GetSamplingRules",
+        "xray:GetSamplingTargets",
+        "xray:GetSamplingStatisticSummaries"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": "arn:aws:logs:*:*:*"
+    }
+  ]
+}
 ```
 
 ### CloudWatch Logs
@@ -611,7 +669,33 @@ aws logs tail /ecs/rady-backend --region us-east-1 --follow
 
 # Frontend logs
 aws logs tail /ecs/rady-frontend --region us-east-1 --follow
+
+# View with timestamps
+aws logs tail /aws/ecs/rady-genai-backend --region us-east-1 --follow --format short
 ```
+
+### CloudWatch Custom Metrics
+
+The backend emits these custom metrics via Embedded Metric Format:
+
+| Metric | Description |
+|--------|-------------|
+| `LLMRequests` | Number of LLM API calls |
+| `PromptTokens` | Input tokens used |
+| `CompletionTokens` | Output tokens generated |
+| `LLMLatency` | LLM response time (ms) |
+| `RAGQueries` | RAG retrieval requests |
+| `RAGResults` | Documents retrieved |
+| `RAGLatency` | RAG query time (ms) |
+
+View in CloudWatch console: **Metrics → Custom Namespaces → RadyGenAI**
+
+### X-Ray Tracing
+
+View traces in AWS Console:
+1. Go to **AWS X-Ray → Traces**
+2. Filter by service: `rady-genai-backend`
+3. Analyze request latency and errors
 
 ### LangFuse (LLM Observability)
 
@@ -623,23 +707,46 @@ For AWS deployment, use LangFuse Cloud:
    - `LANGFUSE_SECRET_KEY`
    - `LANGFUSE_HOST=https://cloud.langfuse.com`
 
-### AWS X-Ray (Alternative to Jaeger)
+### CloudWatch Dashboard (Recommended)
 
-For production AWS deployments, consider AWS X-Ray:
+Create a dashboard with these widgets:
+
+| Widget | Metric | Statistic |
+|--------|--------|-----------|
+| Request Rate | `ALB/RequestCount` | Sum |
+| Response Time | `ALB/TargetResponseTime` | Average |
+| CPU Usage | `ECS/CPUUtilization` | Average |
+| Memory Usage | `ECS/MemoryUtilization` | Average |
+| LLM Latency | `RadyGenAI/LLMLatency` | p95 |
+| Error Rate | `ALB/HTTPCode_Target_5XX_Count` | Sum |
+
+### Alerts (Recommended)
+
+Set up CloudWatch Alarms:
+
 ```bash
-# Enable X-Ray in ECS task definition
-aws ecs update-service --cluster rady-genai-cluster \
-  --service rady-genai-backend-service \
-  --enable-execute-command
+# High latency alert
+aws cloudwatch put-metric-alarm \
+  --alarm-name "rady-genai-high-latency" \
+  --metric-name TargetResponseTime \
+  --namespace AWS/ApplicationELB \
+  --statistic Average \
+  --period 300 \
+  --threshold 5 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 2
+
+# High error rate alert
+aws cloudwatch put-metric-alarm \
+  --alarm-name "rady-genai-high-errors" \
+  --metric-name HTTPCode_Target_5XX_Count \
+  --namespace AWS/ApplicationELB \
+  --statistic Sum \
+  --period 300 \
+  --threshold 10 \
+  --comparison-operator GreaterThanThreshold \
+  --evaluation-periods 1
 ```
-
-### CloudWatch Metrics
-
-Monitor these metrics in CloudWatch:
-- `ECS/CPUUtilization` - Container CPU usage
-- `ECS/MemoryUtilization` - Container memory usage
-- `ALB/RequestCount` - Request throughput
-- `ALB/TargetResponseTime` - API latency
 
 ---
 

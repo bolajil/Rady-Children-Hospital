@@ -92,6 +92,14 @@ except Exception as e:
 
 app = FastAPI(title="Rady Children's GenAI Agent")
 
+# Prometheus metrics (for Grafana)
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    Instrumentator().instrument(app).expose(app)
+    print("Prometheus metrics enabled at /metrics")
+except ImportError:
+    print("Prometheus instrumentator not available")
+
 # OpenTelemetry tracing (for Jaeger)
 try:
     from app.telemetry import setup_telemetry
@@ -100,6 +108,15 @@ try:
         print("OpenTelemetry tracing enabled - sending to Jaeger")
 except Exception as e:
     print(f"OpenTelemetry not available: {e}")
+
+# AWS Monitoring (CloudWatch + X-Ray) for production
+try:
+    from app.aws_monitoring import setup_aws_monitoring, AWS_MONITORING_ENABLED
+    if AWS_MONITORING_ENABLED:
+        setup_aws_monitoring(app)
+        print("AWS CloudWatch + X-Ray monitoring enabled")
+except ImportError:
+    pass
 
 # CORS configuration
 # Allow local dev plus configurable frontend origins (e.g., Vercel domain)

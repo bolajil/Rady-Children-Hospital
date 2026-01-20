@@ -41,3 +41,9 @@ opentelemetry-instrumentation-requests>=0.41b0
 opentelemetry-exporter-otlp-proto-grpc>=1.20.0
 grpcio>=1.50.0
 prometheus-client>=0.17.0
+prometheus-fastapi-instrumentator>=6.0.0
+
+# AWS Monitoring (for production deployment)
+aws-xray-sdk>=2.12.0
+watchtower>=3.0.0
+boto3>=1.28.0
