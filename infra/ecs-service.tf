@@ -262,15 +262,31 @@ resource "aws_ecs_task_definition" "backend" {
       environment = [
         {
           name  = "LANGFUSE_PUBLIC_KEY"
-          value = "pk-lf-4a55ecce-af28-4f39-82f8-474bfa30b44d"
+          value = "pk-lf-489be8c6-e0aa-4c6b-807f-b9e4fb0e8e1e"
         },
         {
           name  = "LANGFUSE_SECRET_KEY"
-          value = "sk-lf-b035812a-4185-42f7-955f-12d00fba19fe"
+          value = "sk-lf-97df7378-d074-4e5c-a79b-6f2c8bc8fad1"
         },
         {
           name  = "LANGFUSE_HOST"
-          value = "https://us.cloud.langfuse.com"
+          value = "http://${aws_lb.main.dns_name}:3001"
+        },
+        {
+          name  = "AWS_MONITORING_ENABLED"
+          value = "true"
+        },
+        {
+          name  = "AWS_REGION"
+          value = "us-east-1"
+        },
+        {
+          name  = "OTEL_ENABLED"
+          value = "true"
+        },
+        {
+          name  = "OTEL_EXPORTER_OTLP_ENDPOINT"
+          value = "http://${aws_lb.main.dns_name}:4318"
         }
       ]
       secrets = [

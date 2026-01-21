@@ -31,7 +31,7 @@ try:
     from opentelemetry import trace
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
     from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     from opentelemetry.instrumentation.requests import RequestsInstrumentor
@@ -83,10 +83,12 @@ def setup_telemetry(app=None, service_name: str = "rady-genai-backend") -> Optio
         # Create tracer provider
         provider = TracerProvider(resource=resource)
         
-        # Create OTLP exporter
+        # Create OTLP HTTP exporter
+        # HTTP exporter expects endpoint with /v1/traces path
+        if not otel_endpoint.endswith("/v1/traces"):
+            otel_endpoint = f"{otel_endpoint}/v1/traces"
         otlp_exporter = OTLPSpanExporter(
-            endpoint=otel_endpoint,
-            insecure=True  # Set to False in production with TLS
+            endpoint=otel_endpoint
         )
         
         # Add span processor

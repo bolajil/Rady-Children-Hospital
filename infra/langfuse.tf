@@ -214,6 +214,14 @@ resource "aws_ecs_task_definition" "langfuse" {
           value = "http://${aws_lb.main.dns_name}:3001"
         },
         {
+          name  = "HOSTNAME"
+          value = "0.0.0.0"
+        },
+        {
+          name  = "PORT"
+          value = "3000"
+        },
+        {
           name  = "TELEMETRY_ENABLED"
           value = "false"
         }
