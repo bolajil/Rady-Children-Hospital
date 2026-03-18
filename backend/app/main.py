@@ -90,6 +90,34 @@ except Exception as e:
     rag_router = None
     print(f"Secure RAG router not available: {e}")
 
+# Clinical tool routers (scan analysis, report builder, medication guide)
+try:
+    from app.routers.scan_analysis import router as scan_router
+    SCAN_ROUTER_AVAILABLE = True
+    print("Scan analysis router available")
+except Exception as e:
+    SCAN_ROUTER_AVAILABLE = False
+    scan_router = None
+    print(f"Scan analysis router not available: {e}")
+
+try:
+    from app.routers.report_builder import router as report_router
+    REPORT_ROUTER_AVAILABLE = True
+    print("Report builder router available")
+except Exception as e:
+    REPORT_ROUTER_AVAILABLE = False
+    report_router = None
+    print(f"Report builder router not available: {e}")
+
+try:
+    from app.routers.medications import router as meds_router
+    MEDS_ROUTER_AVAILABLE = True
+    print("Medication guide router available")
+except Exception as e:
+    MEDS_ROUTER_AVAILABLE = False
+    meds_router = None
+    print(f"Medication guide router not available: {e}")
+
 app = FastAPI(title="Rady Children's GenAI Agent")
 
 # Prometheus metrics (for Grafana)
@@ -122,10 +150,7 @@ except ImportError:
 # Allow local dev plus configurable frontend origins (e.g., Vercel domain)
 frontend_origins_env = os.getenv("FRONTEND_ORIGINS", "")
 additional_origins = [o.strip() for o in frontend_origins_env.split(",") if o.strip()]
-default_origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+default_origins = ["http://localhost:3000", "http://127.0.0.1:3000", "http://127.0.0.1:53389"]
 allow_origins = default_origins + additional_origins
 
 app.add_middleware(
@@ -317,6 +342,12 @@ if COMPLIANCE_ROUTER_AVAILABLE:
     app.include_router(compliance.router)
 if RAG_ROUTER_AVAILABLE and rag_router:
     app.include_router(rag_router)
+if SCAN_ROUTER_AVAILABLE and scan_router:
+    app.include_router(scan_router)
+if REPORT_ROUTER_AVAILABLE and report_router:
+    app.include_router(report_router)
+if MEDS_ROUTER_AVAILABLE and meds_router:
+    app.include_router(meds_router)
 
 # Chat endpoint
 @app.post("/chat", response_model=ChatResponse)
@@ -804,3 +835,4 @@ async def get_session_stats():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

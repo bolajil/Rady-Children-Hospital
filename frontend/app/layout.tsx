@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: "Rady GenAI - Medical Assistant",
   description: "AI-powered medical assistant for Rady Children's Hospital",
   manifest: "/manifest.json",
-  themeColor: "#2563eb",
+  themeColor: "#0D1117",
   viewport: {
     width: "device-width",
     initialScale: 1,
@@ -56,7 +56,7 @@ export default function RootLayout({
       >
         <div className="flex h-screen overflow-hidden">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
+          <main className="flex-1 overflow-y-auto pt-16 md:pt-0 page-enter">
             {children}
           </main>
         </div>

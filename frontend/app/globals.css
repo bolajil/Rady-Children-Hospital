@@ -1,10 +1,6 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ─── Tailwind theme ─────────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -12,15 +8,182 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Design Tokens ─────────────────────────────────────────── */
+:root {
+  --background: #0D1117;
+  --foreground: #E2E8F0;
+
+  /* Brand */
+  --rady-teal:        #00A0AF;
+  --rady-teal-light:  #00C4D5;
+  --rady-teal-dark:   #007A87;
+
+  /* Dark surfaces */
+  --surface-1: #161B22;      /* base card */
+  --surface-2: #1C2333;      /* elevated card */
+  --surface-3: #21262D;      /* input bg */
+  --surface-border: rgba(255,255,255,0.09);
+  --surface-border-strong: rgba(255,255,255,0.15);
+
+  /* Sidebar */
+  --sb-bg:            #0D1117;
+  --sb-surface:       rgba(255,255,255,0.055);
+  --sb-border:        rgba(255,255,255,0.08);
+  --sb-text:          rgba(255,255,255,0.78);
+  --sb-muted:         rgba(255,255,255,0.36);
+  --sb-active-bg:     rgba(0,160,175,0.16);
+  --sb-active-accent: #00C4D5;
+  --sb-hover-bg:      rgba(255,255,255,0.06);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.30);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.40);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.55);
+  --shadow-glow-teal: 0 0 24px rgba(0,160,175,0.40);
 }
+
+/* ─── Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans, 'Inter', system-ui, sans-serif);
 }
+
+/* ─── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.12); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+/* ─── Focus ring ─────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--rady-teal);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   DARK-MODE OVERRIDES FOR CONTENT AREA
+   All pages use Tailwind light classes (bg-white, bg-gray-50…).
+   We override them inside <main> so existing pages go dark
+   without requiring a rewrite of every component.
+   ──────────────────────────────────────────────────────────── */
+
+/* Background overrides */
+main, main .min-h-screen { background-color: #0D1117; }
+
+main .bg-white           { background-color: var(--surface-1) !important; }
+main .bg-gray-50         { background-color: #111827 !important; }
+main .bg-gray-100        { background-color: var(--surface-2) !important; }
+
+/* Input / form surfaces */
+main input,
+main textarea,
+main select {
+  background-color: var(--surface-3) !important;
+  color: #E2E8F0 !important;
+  border-color: var(--surface-border) !important;
+}
+main input::placeholder,
+main textarea::placeholder { color: rgba(148,163,184,0.5) !important; }
+main input:focus,
+main textarea:focus,
+main select:focus {
+  border-color: var(--rady-teal) !important;
+  box-shadow: 0 0 0 3px rgba(0,160,175,0.20) !important;
+  outline: none !important;
+}
+
+/* Text overrides */
+main .text-gray-900 { color: #F1F5F9 !important; }
+main .text-gray-800 { color: #E2E8F0 !important; }
+main .text-gray-700 { color: #CBD5E1 !important; }
+main .text-gray-600 { color: #94A3B8 !important; }
+main .text-gray-500 { color: #64748B !important; }
+main .text-gray-400 { color: #475569 !important; }
+
+/* Border overrides */
+main .border-gray-100 { border-color: rgba(255,255,255,0.06) !important; }
+main .border-gray-200 { border-color: var(--surface-border) !important; }
+main .border-gray-300 { border-color: var(--surface-border-strong) !important; }
+
+/* Shadow overrides */
+main .shadow-sm  { box-shadow: 0 1px 4px rgba(0,0,0,0.35) !important; }
+main .shadow-md  { box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important; }
+main .shadow-xl  { box-shadow: 0 10px 36px rgba(0,0,0,0.55) !important; }
+main .shadow-2xl { box-shadow: 0 24px 64px rgba(0,0,0,0.60) !important; }
+
+/* Hover states for cards inside main */
+main .hover\:bg-gray-50:hover  { background-color: rgba(255,255,255,0.05) !important; }
+main .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.07) !important; }
+main .hover\:shadow-xl:hover   { box-shadow: 0 12px 40px rgba(0,0,0,0.55) !important; }
+
+/* Hover border accent */
+main .hover\:border-blue-500:hover { border-color: var(--rady-teal) !important; }
+
+/* Status badge backgrounds — keep colors, just dim slightly */
+main .bg-green-50  { background-color: rgba(16,185,129,0.12) !important; }
+main .bg-green-100 { background-color: rgba(16,185,129,0.16) !important; }
+main .bg-blue-50   { background-color: rgba(37,99,235,0.14) !important; }
+main .bg-blue-100  { background-color: rgba(37,99,235,0.18) !important; }
+main .bg-red-50    { background-color: rgba(239,68,68,0.12) !important; }
+main .bg-red-100   { background-color: rgba(239,68,68,0.16) !important; }
+main .bg-yellow-50 { background-color: rgba(245,158,11,0.12) !important; }
+main .bg-purple-50 { background-color: rgba(124,58,237,0.14) !important; }
+main .bg-gray-800  { background-color: var(--surface-2) !important; }
+
+/* Button surfaces */
+main .bg-blue-50.text-blue-600 { background-color: rgba(37,99,235,0.14) !important; }
+main .bg-green-50.text-green-600 { background-color: rgba(16,185,129,0.12) !important; }
+
+/* Dividers */
+main hr,
+main .divide-gray-200 > * + * { border-color: var(--surface-border) !important; }
+
+/* ─── Utility classes ─────────────────────────────────────────── */
+.text-gradient-brand {
+  background: linear-gradient(135deg, #00C4D5 0%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-dark {
+  background: rgba(22,27,34,0.85);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 16px;
+}
+
+/* ─── Sidebar nav transition ─────────────────────────────────── */
+.nav-item {
+  transition: background 0.16s ease, color 0.16s ease, transform 0.14s ease;
+  will-change: transform;
+}
+.nav-item:hover { transform: translateX(3px); }
+
+/* ─── Shimmer skeleton ───────────────────────────────────────── */
+@keyframes shimmer {
+  from { background-position: -600px 0; }
+  to   { background-position: 600px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 100%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.5s ease infinite;
+}
+
+/* ─── Page entry animation ───────────────────────────────────── */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: page-in 0.28s cubic-bezier(.22,1,.36,1) both; }

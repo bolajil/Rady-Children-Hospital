@@ -1,8 +1,7 @@
 export const runtime = 'nodejs';
 
 function getBackendUrl() {
-  if (process.env.BACKEND_URL) return process.env.BACKEND_URL;
-  return 'http://localhost:8000';
+  return process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
 }
 
 function setAuthCookie(token: string) {
