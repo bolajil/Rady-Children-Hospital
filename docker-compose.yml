@@ -61,8 +61,10 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      # BACKEND_URL is used by Next.js server-side API proxy routes (container-to-container)
       - BACKEND_URL=http://backend:8000
+      # NEXT_PUBLIC_API_URL is the browser-visible fallback (not used — all calls go via proxy)
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NODE_ENV=development
     volumes:
       - ./frontend:/app

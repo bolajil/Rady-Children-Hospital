@@ -28,6 +28,9 @@ sentence-transformers>=2.2.0
 httpx>=0.25.0
 requests>=2.31.0
 
+# File upload (required for scan analysis multipart/form-data)
+python-multipart>=0.0.6
+
 # Utilities
 tiktoken>=0.5.0
 pypdf>=3.0.0
