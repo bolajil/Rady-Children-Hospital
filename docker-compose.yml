@@ -4,7 +4,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8002:8002"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PYTHONUNBUFFERED=1
@@ -26,9 +26,9 @@ services:
     volumes:
       - ./backend:/app
       - backend_data:/app/data
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -59,18 +59,18 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       # BACKEND_URL is used by Next.js server-side API proxy routes (container-to-container)
-      - BACKEND_URL=http://backend:8000
+      - BACKEND_URL=http://backend:8002
       # NEXT_PUBLIC_API_URL is the browser-visible fallback (not used — all calls go via proxy)
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8002
       - NODE_ENV=development
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
-    command: npm run dev
+    command: npm run dev -- --port 3001
     depends_on:
       backend:
         condition: service_healthy
@@ -170,7 +170,7 @@ services:
   grafana:
     image: grafana/grafana:10.2.2
     ports:
-      - "3002:3000"
+      - "3005:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
