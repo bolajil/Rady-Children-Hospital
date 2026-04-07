@@ -23,7 +23,7 @@ interface User {
   id: string;
   email: string;
   full_name: string;
-  role: 'owner' | 'doctor' | 'patient';
+  role: 'owner' | 'doctor' | 'nurse' | 'patient';
   patient_id?: string;
 }
 
@@ -111,6 +111,15 @@ const PATIENT_QUICK_ACTIONS = [
   { icon: '💊', text: 'Medication question', query: 'I have a question about my medication: ' },
   { icon: '📅', text: 'Prepare for appointment', query: 'Help me prepare questions for my upcoming doctor visit' },
   { icon: '🌡️', text: 'Symptom check', query: 'My child has the following symptoms: ' },
+];
+
+const NURSE_QUICK_ACTIONS = [
+  { icon: '💊', text: 'Medication lookup', query: 'What is the pediatric dose for ' },
+  { icon: '🩸', text: 'Blood transfusion check', query: 'Blood transfusion compatibility check for: ' },
+  { icon: '💉', text: 'IV rate calculator', query: 'Calculate IV drip rate for: ' },
+  { icon: '❤️', text: 'Vital signs assessment', query: 'Assess these pediatric vital signs: ' },
+  { icon: '⚠️', text: 'Drug interaction', query: 'Check interactions between: ' },
+  { icon: '📋', text: 'Shift handoff', query: 'Generate nursing handoff report for patient: ' },
 ];
 
 /* ─── Component ──────────────────────────────────────────────── */
@@ -270,7 +279,8 @@ export default function Home() {
   };
 
   const isDoctor = user?.role === 'doctor' || user?.role === 'owner';
-  const quickActions = isDoctor ? DOCTOR_QUICK_ACTIONS : PATIENT_QUICK_ACTIONS;
+  const isNurse = user?.role === 'nurse';
+  const quickActions = isDoctor ? DOCTOR_QUICK_ACTIONS : isNurse ? NURSE_QUICK_ACTIONS : PATIENT_QUICK_ACTIONS;
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -340,6 +350,27 @@ export default function Home() {
           </div>
         )}
 
+        {/* Nurse clinical tool shortcuts */}
+        {isNurse && (
+          <div className="px-3 pt-3 pb-2 border-b border-gray-100">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-2">Nurse Tools</p>
+            {[
+              { href: '/nurse', icon: '💉', label: 'Nurse Station' },
+              { href: '/medication-guide', icon: '💊', label: 'Medication Guide' },
+            ].map(tool => (
+              <Link key={tool.href} href={tool.href}>
+                <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-teal-50 text-gray-600 hover:text-teal-700 transition-colors group cursor-pointer">
+                  <span className="text-base">{tool.icon}</span>
+                  <span className="text-xs font-semibold">{tool.label}</span>
+                  <svg className="w-3 h-3 ml-auto text-gray-300 group-hover:text-teal-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
         {/* History */}
         <div className="flex-1 overflow-y-auto p-3">
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1 mb-2">History</p>
@@ -392,7 +423,7 @@ export default function Home() {
                 <h1 className="text-sm font-bold text-gray-900">{isDoctor ? 'Clinical AI Assistant' : 'Medical AI Assistant'}</h1>
                 {user && (
                   <p className="text-[11px] text-gray-400">
-                    {user.role === 'doctor' ? '🩺 ' : user.role === 'owner' ? '⚙️ ' : '👤 '}{user.full_name}
+                    {user.role === 'doctor' ? '🩺 ' : user.role === 'nurse' ? '💉 ' : user.role === 'owner' ? '⚙️ ' : '👤 '}{user.full_name}
                   </p>
                 )}
               </div>

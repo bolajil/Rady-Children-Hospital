@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 // Use BACKEND_URL for server-side API routes (Vercel deployment)
 // Falls back to localhost for local development
 function getBackendUrl() {
-  return process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002';
+  return process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 }
 
 function getTokenFromCookieHeader(cookieHeader: string | null): string | null {

@@ -6,6 +6,7 @@ from typing import Optional
 class Role(str, Enum):
     patient = "patient"
     doctor = "doctor"
+    nurse = "nurse"
     owner = "owner"
 
 

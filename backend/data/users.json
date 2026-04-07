@@ -15,6 +15,14 @@
     "patient_id": null,
     "password_hash": "006320e946b194c4dacd2c523ef90deeb3175811f6d1e294cc1211281e02bc03"
   },
+  "UNURSE": {
+    "id": "UNURSE",
+    "email": "nurse@example.com",
+    "full_name": "RN Sarah Chen",
+    "role": "nurse",
+    "patient_id": null,
+    "password_hash": "bfe9bb99c6bdfef674e0f322bfe7e6401ae81d93a080a9752aface4144935932"
+  },
   "UP001": {
     "id": "UP001",
     "email": "emma.parent@example.com",

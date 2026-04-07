@@ -28,6 +28,7 @@ export default function LoginPage() {
             const role = me?.user?.role;
             if (role === 'owner') router.replace('/admin');
             else if (role === 'doctor') router.replace('/ehr');
+            else if (role === 'nurse') router.replace('/nurse');
             else if (role === 'patient') router.replace('/appointments');
             else router.replace('/');
         } catch (err: any) {
@@ -258,7 +259,8 @@ export default function LoginPage() {
                         <div className="space-y-2">
                             {[
                                 { label: 'Doctor', email: 'doctor@example.com', pw: 'doctorpass' },
-                                { label: 'Admin', email: 'admin@example.com', pw: 'adminpass' },
+                                { label: 'Nurse', email: 'nurse@example.com', pw: 'nursepass' },
+                                { label: 'Admin', email: 'owner@example.com', pw: 'ownerpass' },
                             ].map(d => (
                                 <button
                                     key={d.label}

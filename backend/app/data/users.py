@@ -45,7 +45,14 @@ def _seed_users() -> Dict[str, User]:
         patient_id="P002",
         password_hash=_hash_password("patient2", "P002"),
     )
-    return {u.id: u for u in [owner, doctor, patient1, patient2]}
+    nurse = User(
+        id="UNURSE",
+        email="nurse@example.com",
+        full_name="RN Sarah Chen",
+        role=Role.nurse,
+        password_hash=_hash_password("nursepass", "nurse"),
+    )
+    return {u.id: u for u in [owner, doctor, nurse, patient1, patient2]}
 
 
 def _save_db(mapping: Dict[str, User]) -> None:
