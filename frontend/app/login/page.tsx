@@ -261,6 +261,8 @@ export default function LoginPage() {
                                 { label: 'Doctor', email: 'doctor@example.com', pw: 'doctorpass' },
                                 { label: 'Nurse', email: 'nurse@example.com', pw: 'nursepass' },
                                 { label: 'Admin', email: 'owner@example.com', pw: 'ownerpass' },
+                                { label: 'Patient (Emma)', email: 'emma.parent@example.com', pw: 'patient1' },
+                                { label: 'Patient (Liam)', email: 'liam.parent@example.com', pw: 'patient2' },
                             ].map(d => (
                                 <button
                                     key={d.label}
