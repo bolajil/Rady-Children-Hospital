@@ -21,6 +21,7 @@ class AuditEventType(str, Enum):
     VIEW_APPOINTMENTS = "view_appointments"
     
     # Modification events
+    CREATE_PATIENT = "create_patient"
     CREATE_APPOINTMENT = "create_appointment"
     UPDATE_APPOINTMENT = "update_appointment"
     UPDATE_PATIENT = "update_patient"

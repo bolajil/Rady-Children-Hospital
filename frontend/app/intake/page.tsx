@@ -34,14 +34,42 @@ export default function IntakePage() {
     e.preventDefault();
     setSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setSuccess(true);
-    setSubmitting(false);
-    
-    // Redirect after success
-    setTimeout(() => router.push('/admin'), 2000);
+    try {
+      const response = await fetch('/api/ehr/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          date_of_birth: formData.dob,
+          gender: formData.gender,
+          parent_name: formData.parentName,
+          parent_email: formData.parentEmail,
+          parent_phone: formData.parentPhone,
+          address: formData.address,
+          insurance_provider: formData.insuranceProvider,
+          insurance_id: formData.insuranceId,
+          allergies: formData.allergies,
+          medical_history: formData.medicalHistory,
+          primary_care_physician: formData.primaryCarePhysician,
+          emergency_contact_name: formData.emergencyContact,
+          emergency_contact_phone: formData.emergencyPhone,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Registration failed');
+      }
+      
+      setSuccess(true);
+      // Redirect after success
+      setTimeout(() => router.push('/admin'), 2000);
+    } catch (err: any) {
+      alert(err.message || 'Failed to register patient. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (success) {

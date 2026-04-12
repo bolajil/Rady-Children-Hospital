@@ -300,3 +300,38 @@ def search_patients(query: str):
             query in patient.mrn.lower()):
             results.append(patient)
     return results
+
+
+def add_patient(patient: Patient) -> Patient:
+    """Add a new patient to the in-memory store"""
+    # Generate new ID and MRN
+    next_id = len(SAMPLE_PATIENTS) + 1
+    patient.id = f"P{next_id:03d}"
+    patient.mrn = f"MRN-2024-{next_id:03d}"
+    SAMPLE_PATIENTS.append(patient)
+    return patient
+
+
+def create_empty_health_record(patient_id: str) -> HealthRecord:
+    """Create an empty health record for a new patient"""
+    record = HealthRecord(
+        patient_id=patient_id,
+        vitals=Vitals(
+            height="",
+            weight="",
+            blood_pressure="",
+            heart_rate="",
+            temperature="",
+            respiratory_rate="",
+            oxygen_saturation="",
+            last_updated=datetime.now().strftime("%Y-%m-%d")
+        ),
+        medications=[],
+        allergies=[],
+        diagnoses=[],
+        immunizations=[],
+        lab_results=[],
+        visit_history=[]
+    )
+    SAMPLE_HEALTH_RECORDS[patient_id] = record
+    return record

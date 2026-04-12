@@ -3,8 +3,8 @@ from datetime import date, datetime
 from typing import Optional, List, Dict
 
 class Patient(BaseModel):
-    id: str
-    mrn: str  # Medical Record Number
+    id: str = ""
+    mrn: str = ""  # Medical Record Number
     first_name: str
     last_name: str
     date_of_birth: date
@@ -14,27 +14,25 @@ class Patient(BaseModel):
     email: str
     address: str
     emergency_contact: Dict[str, str]
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "P001",
-                "mrn": "MRN-2024-001",
-                "first_name": "Emma",
-                "last_name": "Johnson",
-                "date_of_birth": "2018-05-15",
-                "age": 6,
-                "gender": "Female",
-                "phone": "(555) 123-4567",
-                "email": "parent@example.com",
-                "address": "123 Main St, San Diego, CA 92101",
-                "emergency_contact": {
-                    "name": "Sarah Johnson",
-                    "relationship": "Mother",
-                    "phone": "(555) 123-4567"
-                }
-            }
-        }
+
+
+class PatientCreate(BaseModel):
+    """Request model for creating a new patient"""
+    first_name: str
+    last_name: str
+    date_of_birth: date
+    gender: str
+    parent_name: str
+    parent_email: str
+    parent_phone: str
+    address: str = ""
+    insurance_provider: str = ""
+    insurance_id: str = ""
+    allergies: str = ""
+    medical_history: str = ""
+    primary_care_physician: str = ""
+    emergency_contact_name: str = ""
+    emergency_contact_phone: str = ""
 
 class Vitals(BaseModel):
     height: str

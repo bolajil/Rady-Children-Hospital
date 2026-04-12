@@ -1,11 +1,14 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
-from app.models.patient import Patient, HealthRecord
+from datetime import date
+from app.models.patient import Patient, HealthRecord, PatientCreate
 from app.data.sample_patients import (
     get_all_patients,
     get_patient_by_id,
     get_health_record,
-    search_patients
+    search_patients,
+    add_patient,
+    create_empty_health_record
 )
 from app.security import require_roles, CurrentUser, get_current_user
 from app.models.user import Role
@@ -31,6 +34,58 @@ async def list_patients(user: CurrentUser = Depends(require_roles(Role.doctor, R
         details={"action": "list_all_patients"}
     )
     return get_all_patients()
+
+
+@router.post("/patients", response_model=Patient)
+async def register_patient(data: PatientCreate, user: CurrentUser = Depends(require_roles(Role.owner))):
+    """Register a new patient - Admin only"""
+    # Calculate age from date of birth
+    today = date.today()
+    age = today.year - data.date_of_birth.year - ((today.month, today.day) < (data.date_of_birth.month, data.date_of_birth.day))
+    
+    # Create patient object
+    new_patient = Patient(
+        id="",  # Will be generated
+        mrn="",  # Will be generated
+        first_name=data.first_name,
+        last_name=data.last_name,
+        date_of_birth=data.date_of_birth,
+        age=age,
+        gender=data.gender.capitalize(),
+        phone=data.parent_phone,
+        email=data.parent_email,
+        address=data.address,
+        emergency_contact={
+            "name": data.emergency_contact_name or data.parent_name,
+            "relationship": "Parent/Guardian",
+            "phone": data.emergency_contact_phone or data.parent_phone
+        }
+    )
+    
+    # Add to storage
+    saved_patient = add_patient(new_patient)
+    
+    # Create empty health record
+    create_empty_health_record(saved_patient.id)
+    
+    # Log the creation
+    log_phi_access(
+        event_type=AuditEventType.CREATE_PATIENT,
+        user_id=user.id,
+        user_email=user.email,
+        user_role=user.role.value,
+        resource_type="patient",
+        resource_id=saved_patient.id,
+        patient_id=saved_patient.id,
+        details={
+            "action": "register_patient",
+            "patient_name": f"{saved_patient.first_name} {saved_patient.last_name}",
+            "allergies": data.allergies,
+            "medical_history": data.medical_history
+        }
+    )
+    
+    return saved_patient
 
 @router.get("/patients/search", response_model=List[Patient])
 async def search_patients_endpoint(q: str = Query(..., min_length=1), _: None = Depends(require_roles(Role.doctor, Role.owner))):
