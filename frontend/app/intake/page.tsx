@@ -61,18 +61,37 @@ export default function IntakePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Patient Intake</h1>
-            <p className="text-gray-600 mt-1">Register a new patient in the system</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Prominent Header */}
+      <div className="bg-gradient-to-r from-teal-600 via-teal-500 to-cyan-500 shadow-lg">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-sm">Patient Intake</h1>
+                <p className="text-teal-100 text-sm md:text-base mt-0.5">Register a new patient in the system</p>
+              </div>
+            </div>
+            <Link 
+              href="/admin" 
+              className="flex items-center gap-2 px-5 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-xl font-semibold transition-all shadow-md hover:shadow-lg border border-white/30"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              <span className="hidden sm:inline">Back to Admin</span>
+              <span className="sm:hidden">Back</span>
+            </Link>
           </div>
-          <Link href="/admin" className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium">
-            ← Back to Admin
-          </Link>
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-6 py-8">
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Patient Information */}
@@ -288,30 +307,43 @@ export default function IntakePage() {
             </div>
           </div>
 
-          {/* Submit */}
-          <div className="flex justify-end gap-4">
-            <Link href="/admin" className="px-6 py-3 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 font-medium">
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-6 py-3 rounded-lg bg-teal-600 text-white hover:bg-teal-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {submitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Registering...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Register Patient
-                </>
-              )}
-            </button>
+          {/* Submit Section - Sticky Footer */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Fields marked with * are required</span>
+              </div>
+              <div className="flex gap-3">
+                <Link 
+                  href="/admin" 
+                  className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-semibold transition-all border border-gray-200"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-8 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Registering...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                      Register Patient
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </form>
       </div>
