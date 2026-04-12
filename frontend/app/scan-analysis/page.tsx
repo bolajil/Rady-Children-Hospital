@@ -10,6 +10,7 @@ interface ScanResult {
   recommendations: string;
   scan_type: string;
   confidence_note: string;
+  analysis_source?: 'ai' | 'demo';
 }
 
 const SCAN_TYPES = ['X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'PET Scan', 'Fluoroscopy', 'Other'];
@@ -264,7 +265,14 @@ export default function ScanAnalysisPage() {
                   {/* Header row */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900">Analysis Results</h2>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-gray-900">Analysis Results</h2>
+                        {result.analysis_source === 'ai' ? (
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full uppercase">GPT-4 Vision</span>
+                        ) : (
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-full uppercase">Demo</span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500">{result.scan_type} · {result.body_region}</p>
                     </div>
                     <button

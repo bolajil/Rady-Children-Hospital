@@ -1,0 +1,39 @@
+# Netlify configuration for Rady Children's GenAI Platform
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_VERSION = "10"
+
+# Next.js requires the Next.js runtime
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Environment variables (set in Netlify dashboard for security)
+# NEXT_PUBLIC_API_URL = "https://your-backend-url.com"
+# OPENAI_API_KEY = "sk-..." (set in backend, not frontend)
+
+# Headers for security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Redirects for SPA routing
+[[redirects]]
+  from = "/api/*"
+  to = "https://rady-genai-backend.onrender.com/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

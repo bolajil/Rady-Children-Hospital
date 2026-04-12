@@ -1,0 +1,37 @@
+# Render.com Blueprint for Rady Children's GenAI Backend
+# Deploy with: render blueprint apply
+
+services:
+  # FastAPI Backend
+  - type: web
+    name: rady-genai-backend
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: OPENAI_API_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: LANGFUSE_PUBLIC_KEY
+        sync: false
+      - key: LANGFUSE_SECRET_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: "https://rady-genai.netlify.app,http://localhost:3000"
+    autoDeploy: true
+
+# Alternative: Docker deployment
+# services:
+#   - type: web
+#     name: rady-genai-backend
+#     runtime: docker
+#     dockerfilePath: backend/Dockerfile
+#     envVars:
+#       - key: OPENAI_API_KEY
+#         sync: false
