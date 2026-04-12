@@ -411,7 +411,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header */}
-        <header className="bg-white/90 backdrop-blur-md border-b border-gray-200/60 px-4 py-3 sticky top-0 z-30 shadow-sm">
+        <header className="bg-gradient-to-r from-teal-50 to-cyan-50 backdrop-blur-md border-b border-teal-200/60 px-4 py-3 sticky top-0 z-30 shadow-sm">
           <div className="flex items-center justify-between max-w-3xl mx-auto">
             <div className="flex items-center gap-3">
               <button onClick={() => setSidebarOpen(s => !s)} className="p-2 hover:bg-gray-100 rounded-xl transition-colors" aria-label="Toggle sidebar">
@@ -429,26 +429,9 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {isDoctor && (
-                <div className="hidden lg:flex items-center gap-1.5">
-                  {[
-                    { href: '/scan-analysis', label: '🔬 Scan' },
-                    { href: '/report-builder', label: '📋 Report' },
-                    { href: '/medication-guide', label: '💊 Meds' },
-                  ].map(t => (
-                    <Link key={t.href} href={t.href}>
-                      <span className="inline-flex items-center px-2.5 py-1 bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer">
-                        {t.label}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-100 rounded-full">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[11px] font-semibold text-green-700 hidden sm:inline">Online</span>
-              </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-green-100 rounded-full">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              <span className="text-[11px] font-semibold text-green-700 hidden sm:inline">Online</span>
             </div>
           </div>
         </header>
@@ -608,7 +591,7 @@ export default function Home() {
         </div>
 
         {/* Input */}
-        <div className="border-t border-gray-200/60 bg-white/90 backdrop-blur-md px-4 py-3">
+        <div className="border-t border-teal-200/60 bg-gradient-to-r from-teal-50 to-cyan-50 backdrop-blur-md px-4 py-3">
           <form onSubmit={sendMessage} className="max-w-3xl mx-auto">
             <div className="flex gap-2 items-end">
               <div className="flex-1 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-teal-400 focus-within:bg-white focus-within:shadow-md transition-all">
@@ -648,3 +631,4 @@ export default function Home() {
     </div>
   );
 }
+

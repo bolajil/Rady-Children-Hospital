@@ -23,9 +23,8 @@ export default function LoginPage() {
             const body = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(body?.detail || body?.error || 'Login failed');
 
-            const meRes = await fetch('/api/auth/me');
-            const me = await meRes.json().catch(() => null);
-            const role = me?.user?.role;
+            // Use role from login response directly (cookie is set by response)
+            const role = body?.user?.role;
             if (role === 'owner') router.replace('/admin');
             else if (role === 'doctor') router.replace('/ehr');
             else if (role === 'nurse') router.replace('/nurse');

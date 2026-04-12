@@ -8,7 +8,7 @@ interface User {
     id: string;
     email: string;
     full_name: string;
-    role: 'owner' | 'doctor' | 'patient';
+    role: 'owner' | 'doctor' | 'nurse' | 'patient';
     patient_id?: string;
 }
 
@@ -123,6 +123,22 @@ const NAV_GROUPS: NavGroup[] = [
         ],
     },
     {
+        label: 'Nursing',
+        items: [
+            {
+                name: 'Nurse Station',
+                path: '/nurse',
+                roles: ['owner', 'nurse'],
+                accent: 'from-pink-400 to-rose-500',
+                icon: (
+                    <svg className={ICON_CLS} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                ),
+            },
+        ],
+    },
+    {
         label: 'Compliance',
         items: [
             {
@@ -144,6 +160,7 @@ const NAV_GROUPS: NavGroup[] = [
 const ROLE_META: Record<string, { label: string; gradient: string }> = {
     owner:   { label: 'Administrator', gradient: 'from-violet-500 to-indigo-500' },
     doctor:  { label: 'Clinician',     gradient: 'from-teal-400  to-cyan-500'   },
+    nurse:   { label: 'Nurse',         gradient: 'from-pink-400   to-rose-500'  },
     patient: { label: 'Patient',       gradient: 'from-emerald-400 to-teal-500' },
 };
 
