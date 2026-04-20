@@ -4,7 +4,7 @@ function getBackendUrl() {
   // In Vercel, BACKEND_URL should be set; locally default to localhost
   if (process.env.BACKEND_URL) return process.env.BACKEND_URL;
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-  return 'http://127.0.0.1:8000';
+  return process.env.BACKEND_URL || 'http://127.0.0.1:8003';
 }
 
 export async function POST(request: Request) {

@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import http from 'http';
 
 function getBackendPort() {
-  return 8000;
+  return 8003;
 }
 
 function setAuthCookie(token: string) {

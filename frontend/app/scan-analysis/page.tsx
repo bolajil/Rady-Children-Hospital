@@ -3,6 +3,24 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface OcrFields {
+  patient_id?: string;
+  patient_name?: string;
+  dob?: string;
+  scan_date?: string;
+  scan_time?: string;
+  modality?: string;
+  institution?: string;
+  clinical_indication?: string;  // reason for imaging — NOT a radiological finding
+  measurements?: string[];
+  markers?: string[];
+  views?: string[];
+  kv?: string;
+  ma?: string;
+  exposure?: string;
+  other?: string[];
+}
+
 interface ScanResult {
   body_region: string;
   findings: string;
@@ -10,16 +28,14 @@ interface ScanResult {
   recommendations: string;
   scan_type: string;
   confidence_note: string;
-  analysis_source?: 'ai' | 'demo';
+  analysis_source?: 'ai' | 'ai+ocr' | 'demo';
+  extracted_text?: string | null;
+  ocr_fields?: OcrFields | null;
+  ocr_source?: 'tesseract' | 'gpt4o-ocr' | null;
 }
 
 const SCAN_TYPES = ['X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'PET Scan', 'Fluoroscopy', 'Other'];
 
-const SEVERITY_COLORS: Record<string, string> = {
-  findings: 'border-blue-200 bg-blue-50',
-  impression: 'border-teal-200 bg-teal-50',
-  recommendations: 'border-violet-200 bg-violet-50',
-};
 
 export default function ScanAnalysisPage() {
   const [dragOver, setDragOver] = useState(false);
@@ -68,8 +84,8 @@ export default function ScanAnalysisPage() {
         throw new Error(err.detail || 'Analysis failed');
       }
       setResult(await res.json());
-    } catch (err: any) {
-      setError(err.message || 'Analysis failed. Please try again.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Analysis failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -77,9 +93,10 @@ export default function ScanAnalysisPage() {
 
   const copyReport = async () => {
     if (!result) return;
-    const text = [
+    const lines = [
       `SCAN ANALYSIS REPORT`,
       `Type: ${result.scan_type} | Region: ${result.body_region}`,
+      `Source: ${result.analysis_source?.toUpperCase() ?? 'UNKNOWN'}`,
       ``,
       `FINDINGS:`,
       result.findings,
@@ -89,12 +106,12 @@ export default function ScanAnalysisPage() {
       ``,
       `RECOMMENDATIONS:`,
       result.recommendations,
-      ``,
-      `AI CONFIDENCE NOTE:`,
-      result.confidence_note,
-      ``,
-      `⚠️ This is an AI-assisted preliminary reading. Review by a qualified radiologist required before clinical use.`,
-    ].join('\n');
+    ];
+    if (result.extracted_text) {
+      lines.push(``, `OCR-EXTRACTED IMAGE TEXT (${result.ocr_source ?? 'ocr'}):`, result.extracted_text);
+    }
+    lines.push(``, `AI CONFIDENCE NOTE:`, result.confidence_note, ``, `⚠️ This is an AI-assisted preliminary reading. Review by a qualified radiologist required before clinical use.`);
+    const text = lines.join('\n');
     await navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -267,7 +284,9 @@ export default function ScanAnalysisPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-bold text-gray-900">Analysis Results</h2>
-                        {result.analysis_source === 'ai' ? (
+                        {result.analysis_source === 'ai+ocr' ? (
+                          <span className="px-2 py-0.5 text-[10px] font-bold bg-teal-100 text-teal-700 rounded-full uppercase">GPT-4 + OCR</span>
+                        ) : result.analysis_source === 'ai' ? (
                           <span className="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full uppercase">GPT-4 Vision</span>
                         ) : (
                           <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-full uppercase">Demo</span>
@@ -323,6 +342,72 @@ export default function ScanAnalysisPage() {
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">{result.recommendations}</p>
                   </div>
+
+                  {/* OCR / IDP panel */}
+                  {(result.extracted_text || result.ocr_fields) && (
+                    <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+                      {/* Header */}
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-slate-400" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Image Metadata — OCR / IDP
+                        </span>
+                        {result.ocr_source && (
+                          <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold bg-slate-100 text-slate-500 rounded-full">
+                            via {result.ocr_source === 'gpt4o-ocr' ? 'GPT-4o OCR' : 'Tesseract'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Clinical Indication — prominently separated */}
+                      {result.ocr_fields?.clinical_indication && result.ocr_fields.clinical_indication !== '[REDACTED]' && (
+                        <div className="rounded-lg border border-orange-100 bg-orange-50 px-3 py-2">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-orange-500 mb-0.5">
+                            Clinical Indication (reason for imaging)
+                          </p>
+                          <p className="text-sm font-medium text-orange-800">
+                            {result.ocr_fields.clinical_indication}
+                          </p>
+                          <p className="text-[10px] text-orange-400 mt-1">
+                            This is the ordering clinician&apos;s stated reason — not a radiological finding.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Technical parameters grid */}
+                      {result.ocr_fields && (() => {
+                        const techKeys = ['modality', 'views', 'markers', 'scan_date', 'scan_time', 'institution', 'measurements', 'kv', 'ma', 'exposure', 'other'];
+                        const techEntries = (Object.entries(result.ocr_fields) as [string, string | string[] | undefined][])
+                          .filter(([k, v]) => techKeys.includes(k) && v && (Array.isArray(v) ? v.length > 0 : (v as string).trim() !== '' && v !== '[REDACTED]'));
+                        return techEntries.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            {techEntries.map(([key, val]) => (
+                              <div key={key} className="flex flex-col">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                  {key.replace(/_/g, ' ')}
+                                </span>
+                                <span className="text-xs text-slate-700 font-mono">
+                                  {Array.isArray(val) ? val.join(', ') : val}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null;
+                      })()}
+
+                      {/* Raw OCR text */}
+                      {result.extracted_text && (
+                        <details className="group">
+                          <summary className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 cursor-pointer select-none hover:text-slate-600">
+                            Raw OCR text ▸
+                          </summary>
+                          <pre className="mt-2 text-xs text-slate-600 font-mono whitespace-pre-wrap bg-slate-50 rounded-lg p-3 leading-relaxed max-h-28 overflow-y-auto border border-slate-100">
+                            {result.extracted_text}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  )}
 
                   {/* AI confidence note */}
                   <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">

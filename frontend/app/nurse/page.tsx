@@ -152,10 +152,10 @@ const NURSE_TOOLS = [
 ];
 
 const ACUITY_COLORS = {
-  Low: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
-  Medium: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-  High: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
-  Critical: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+  Low: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
+  Medium: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
+  High: { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+  Critical: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
 };
 
 const STATUS_COLORS = {
@@ -333,9 +333,9 @@ export default function NurseStationPage() {
 
   const getNoteUrgencyStyle = (urgency: NurseNote['urgency']) => {
     switch (urgency) {
-      case 'critical': return { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', label: '🚨 Critical' };
-      case 'urgent': return { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30', label: '⚠️ Urgent' };
-      default: return { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30', label: '📝 Routine' };
+      case 'critical': return { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200', label: '🚨 Critical' };
+      case 'urgent': return { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200', label: '⚠️ Urgent' };
+      default: return { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200', label: '📝 Routine' };
     }
   };
 
@@ -553,9 +553,9 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                 { label: 'O2 Sat (%)', value: o2Sat, set: setO2Sat, ph: '98' },
               ].map(f => (
                 <div key={f.label}>
-                  <label className="block text-xs text-white/50 mb-1">{f.label}</label>
+                  <label className="block text-xs text-slate-400 mb-1">{f.label}</label>
                   <input type="text" value={f.value} onChange={e => f.set(e.target.value)} placeholder={f.ph}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                    className="input text-sm" />
                 </div>
               ))}
             </div>
@@ -570,19 +570,19 @@ Room: ${toolPatient.room}-${toolPatient.bed}
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="block text-xs text-white/50 mb-1">Volume (mL)</label>
+                <label className="block text-xs text-slate-400 mb-1">Volume (mL)</label>
                 <input type="number" value={totalVolume} onChange={e => setTotalVolume(e.target.value)} placeholder="1000"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Hours</label>
+                <label className="block text-xs text-slate-400 mb-1">Hours</label>
                 <input type="number" value={infusionHours} onChange={e => setInfusionHours(e.target.value)} placeholder="8"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Drop Factor</label>
+                <label className="block text-xs text-slate-400 mb-1">Drop Factor</label>
                 <select value={dropFactor} onChange={e => setDropFactor(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none">
+                  className="input text-sm">
                   <option value="10">10 gtt/mL</option>
                   <option value="15">15 gtt/mL</option>
                   <option value="20">20 gtt/mL</option>
@@ -601,19 +601,19 @@ Room: ${toolPatient.room}-${toolPatient.bed}
           <div className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
               <div>
-                <label className="block text-xs text-white/50 mb-1">Medication</label>
+                <label className="block text-xs text-slate-400 mb-1">Medication</label>
                 <input type="text" value={medName} onChange={e => setMedName(e.target.value)} placeholder="Amoxicillin"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Dose</label>
+                <label className="block text-xs text-slate-400 mb-1">Dose</label>
                 <input type="text" value={medDose} onChange={e => setMedDose(e.target.value)} placeholder="250mg"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Weight (kg)</label>
+                <label className="block text-xs text-slate-400 mb-1">Weight (kg)</label>
                 <input type="number" value={patientWeight} onChange={e => setPatientWeight(e.target.value)} placeholder="20"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
             </div>
             <button onClick={handleMedCheck} disabled={loading}
@@ -626,9 +626,9 @@ Room: ${toolPatient.room}-${toolPatient.bed}
         return (
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-white/50 mb-1">Current Status</label>
+              <label className="block text-xs text-slate-400 mb-1">Current Status</label>
               <select value={handoffStatus} onChange={e => setHandoffStatus(e.target.value)}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none">
+                className="input text-sm">
                 <option value="">Select status...</option>
                 <option value="Stable">Stable</option>
                 <option value="Improving">Improving</option>
@@ -638,22 +638,22 @@ Room: ${toolPatient.room}-${toolPatient.bed}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1">Key Events This Shift</label>
+              <label className="block text-xs text-slate-400 mb-1">Key Events This Shift</label>
               <textarea value={handoffEvents} onChange={e => setHandoffEvents(e.target.value)} 
                 placeholder="Procedures, tests, changes in condition..."
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none resize-none" rows={2} />
+                className="input text-sm resize-none" rows={2} />
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1">Care Plan / Next Steps</label>
+              <label className="block text-xs text-slate-400 mb-1">Care Plan / Next Steps</label>
               <textarea value={handoffPlan} onChange={e => setHandoffPlan(e.target.value)} 
                 placeholder="Upcoming meds, tests, discharge planning..."
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none resize-none" rows={2} />
+                className="input text-sm resize-none" rows={2} />
             </div>
             <div>
-              <label className="block text-xs text-white/50 mb-1">Concerns / Watch For</label>
+              <label className="block text-xs text-slate-400 mb-1">Concerns / Watch For</label>
               <textarea value={handoffConcerns} onChange={e => setHandoffConcerns(e.target.value)} 
                 placeholder="Pain, fall risk, family concerns..."
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none resize-none" rows={2} />
+                className="input text-sm resize-none" rows={2} />
             </div>
             <button onClick={handleShiftHandoff} disabled={loading}
               className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg font-semibold text-sm disabled:opacity-50">
@@ -665,9 +665,9 @@ Room: ${toolPatient.room}-${toolPatient.bed}
         return (
           <div className="space-y-3">
             <div>
-              <label className="block text-xs text-white/50 mb-1">Blood Product Type</label>
+              <label className="block text-xs text-slate-400 mb-1">Blood Product Type</label>
               <select value={bloodType} onChange={e => setBloodType(e.target.value)}
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none">
+                className="input text-sm">
                 <option value="">Select product...</option>
                 <option value="Packed Red Blood Cells (PRBC)">Packed Red Blood Cells (PRBC)</option>
                 <option value="Fresh Frozen Plasma (FFP)">Fresh Frozen Plasma (FFP)</option>
@@ -679,14 +679,14 @@ Room: ${toolPatient.room}-${toolPatient.bed}
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs text-white/50 mb-1">Units</label>
+                <label className="block text-xs text-slate-400 mb-1">Units</label>
                 <input type="number" value={bloodUnits} onChange={e => setBloodUnits(e.target.value)} placeholder="1"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Indication</label>
+                <label className="block text-xs text-slate-400 mb-1">Indication</label>
                 <select value={bloodReason} onChange={e => setBloodReason(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none">
+                  className="input text-sm">
                   <option value="">Select reason...</option>
                   <option value="Anemia">Anemia</option>
                   <option value="Active Bleeding">Active Bleeding</option>
@@ -706,27 +706,27 @@ Room: ${toolPatient.room}-${toolPatient.bed}
         return (
           <div className="space-y-3">
             {toolPatient && (
-              <div className="p-2 rounded-lg bg-white/5 text-xs text-white/60">
+              <div className="p-2 rounded-lg bg-slate-100 text-xs text-slate-500">
                 Scale: {toolPatient.age <= 3 ? 'FLACC (0-10)' : toolPatient.age <= 7 ? 'Wong-Baker FACES (0-10)' : 'Numeric (0-10)'}
               </div>
             )}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs text-white/50 mb-1">Pain Score (0-10)</label>
+                <label className="block text-xs text-slate-400 mb-1">Pain Score (0-10)</label>
                 <input type="number" min="0" max="10" value={painScore} onChange={e => setPainScore(e.target.value)} placeholder="0"
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Location</label>
+                <label className="block text-xs text-slate-400 mb-1">Location</label>
                 <input type="text" value={painLocation} onChange={e => setPainLocation(e.target.value)} placeholder="Abdomen, leg..."
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none" />
+                  className="input text-sm" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs text-white/50 mb-1">Pain Type</label>
+                <label className="block text-xs text-slate-400 mb-1">Pain Type</label>
                 <select value={painType} onChange={e => setPainType(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none">
+                  className="input text-sm">
                   <option value="">Select type...</option>
                   <option value="Sharp">Sharp</option>
                   <option value="Dull">Dull</option>
@@ -737,9 +737,9 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-white/50 mb-1">Intervention Given</label>
+                <label className="block text-xs text-slate-400 mb-1">Intervention Given</label>
                 <select value={painIntervention} onChange={e => setPainIntervention(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:border-teal-500 focus:outline-none">
+                  className="input text-sm">
                   <option value="">None</option>
                   <option value="Acetaminophen">Acetaminophen</option>
                   <option value="Ibuprofen">Ibuprofen</option>
@@ -758,7 +758,7 @@ Room: ${toolPatient.room}-${toolPatient.bed}
         );
       default:
         return (
-          <div className="flex items-center justify-center h-32 text-white/40 text-sm">
+          <div className="flex items-center justify-center h-32 text-slate-400 text-sm">
             Select a tool above
           </div>
         );
@@ -766,34 +766,34 @@ Room: ${toolPatient.room}-${toolPatient.bed}
   };
 
   return (
-    <div className="min-h-screen" style={{ background: '#0D1117' }}>
+    <div className="min-h-screen" style={{ background: 'var(--background)' }}>
       {/* Header */}
-      <header className="sticky top-0 z-30 px-6 py-4" style={{ background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <header className="sticky top-0 z-30 px-6 py-4" style={{ background: 'rgba(247,246,244,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Nurse Station</h1>
-            <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>Patient assignments & clinical tools</p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--slate-900)' }}>Nurse Station</h1>
+            <p className="text-sm mt-1" style={{ color: 'var(--slate-500)' }}>Patient assignments & clinical tools</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Tab Switcher */}
-            <div className="flex rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <div className="flex rounded-xl p-1" style={{ background: 'var(--slate-100)', border: '1px solid var(--border-subtle)' }}>
               {[
                 { id: 'dashboard', label: '📋 Assign' },
-                { id: 'my-patients', label: '� My Patients' },
+                { id: 'my-patients', label: '🩺 My Patients' },
                 { id: 'tools', label: '🔧 Tools' },
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as ActiveTab)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    activeTab === tab.id ? 'bg-teal-500 text-white' : 'text-white/60 hover:text-white'
+                    activeTab === tab.id ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </div>
-            <div className="px-4 py-2 rounded-xl text-sm font-medium" style={{ background: 'rgba(0,196,213,0.15)', color: '#00C4D5' }}>
+            <div className="px-4 py-2 rounded-xl text-sm font-semibold" style={{ background: 'var(--teal-50)', color: 'var(--teal-700)', border: '1px solid var(--teal-100)' }}>
               {patients.length} Patients • {nurses.length} Nurses
             </div>
           </div>
@@ -803,21 +803,21 @@ Room: ${toolPatient.room}-${toolPatient.bed}
       <main className="p-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="p-4 rounded-2xl" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Total Patients</p>
-            <p className="text-2xl font-bold text-white">{patients.length}</p>
+          <div className="p-4 rounded-2xl card">
+            <p className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: 'var(--slate-400)' }}>Total Patients</p>
+            <p className="text-2xl font-bold" style={{ color: 'var(--slate-900)' }}>{patients.length}</p>
           </div>
-          <div className="p-4 rounded-2xl" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Unassigned</p>
-            <p className="text-2xl font-bold text-orange-400">{patients.filter(p => !getAssignedNurse(p.id)).length}</p>
+          <div className="p-4 rounded-2xl card">
+            <p className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: 'var(--slate-400)' }}>Unassigned</p>
+            <p className="text-2xl font-bold text-orange-600">{patients.filter(p => !getAssignedNurse(p.id)).length}</p>
           </div>
-          <div className="p-4 rounded-2xl" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Nurses Available</p>
-            <p className="text-2xl font-bold text-green-400">{nurses.filter(n => n.status === 'available').length}</p>
+          <div className="p-4 rounded-2xl card">
+            <p className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: 'var(--slate-400)' }}>Nurses Available</p>
+            <p className="text-2xl font-bold text-green-600">{nurses.filter(n => n.status === 'available').length}</p>
           </div>
-          <div className="p-4 rounded-2xl" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.4)' }}>Critical Patients</p>
-            <p className="text-2xl font-bold text-red-400">{patients.filter(p => p.acuity === 'Critical').length}</p>
+          <div className="p-4 rounded-2xl card">
+            <p className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: 'var(--slate-400)' }}>Critical Patients</p>
+            <p className="text-2xl font-bold text-red-600">{patients.filter(p => p.acuity === 'Critical').length}</p>
           </div>
         </div>
 
@@ -826,27 +826,27 @@ Room: ${toolPatient.room}-${toolPatient.bed}
             <motion.div key="dashboard" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               
               {/* Step Navigation Bar */}
-              <div className="mb-6 rounded-2xl p-4" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="mb-6 rounded-2xl p-4" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {/* Step 1 */}
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${!selectedNurse ? 'bg-teal-500 text-white' : 'bg-white/5 text-white/60'}`}>
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${!selectedNurse ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
                       <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">1</span>
                       <span className="text-sm font-medium">Select Nurse</span>
                     </div>
-                    <svg className="w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                     {/* Step 2 */}
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${selectedNurse && selectedPatients.size === 0 ? 'bg-teal-500 text-white' : selectedNurse ? 'bg-white/5 text-white/60' : 'bg-white/5 text-white/30'}`}>
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${selectedNurse && selectedPatients.size === 0 ? 'bg-teal-500 text-white' : selectedNurse ? 'bg-slate-100 text-slate-500' : 'bg-slate-100 text-slate-300'}`}>
                       <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">2</span>
                       <span className="text-sm font-medium">Select Patients</span>
                     </div>
-                    <svg className="w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                     {/* Step 3 */}
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${selectedPatients.size > 0 ? 'bg-teal-500 text-white' : 'bg-white/5 text-white/30'}`}>
+                    <div className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${selectedPatients.size > 0 ? 'bg-teal-500 text-white' : 'bg-slate-100 text-slate-300'}`}>
                       <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">3</span>
                       <span className="text-sm font-medium">Confirm</span>
                     </div>
@@ -856,8 +856,8 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                   <div className="flex items-center gap-2">
                     {selectedNurse && (
                       <button onClick={() => { setSelectedNurse(null); setSelectedPatients(new Set()); }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white/70 hover:text-white transition-all"
-                        style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 transition-all"
+                        style={{ background: 'var(--slate-100)', border: '1px solid var(--border-subtle)' }}>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
@@ -866,7 +866,7 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                     )}
                     {selectedPatients.size > 0 && selectedNurse && (
                       <button onClick={assignPatients}
-                        className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white transition-all"
+                        className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-slate-900 transition-all"
                         style={{ background: 'linear-gradient(135deg, #00C4D5 0%, #0891B2 100%)' }}>
                         Assign {selectedPatients.size} Patient{selectedPatients.size > 1 ? 's' : ''}
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -879,19 +879,19 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                 
                 {/* Current Selection Info */}
                 {selectedNurse && (
-                  <div className="mt-4 pt-4 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="mt-4 pt-4 flex items-center justify-between" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-bold text-sm">
                         {nurses.find(n => n.id === selectedNurse)?.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-white">{nurses.find(n => n.id === selectedNurse)?.name}</p>
-                        <p className="text-xs text-white/50">{nurses.find(n => n.id === selectedNurse)?.unit} • {getNursePatients(selectedNurse).length} current patients</p>
+                        <p className="text-sm font-semibold text-slate-900">{nurses.find(n => n.id === selectedNurse)?.name}</p>
+                        <p className="text-xs text-slate-400">{nurses.find(n => n.id === selectedNurse)?.unit} • {getNursePatients(selectedNurse).length} current patients</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold" style={{ color: '#00C4D5' }}>{selectedPatients.size}</p>
-                      <p className="text-xs text-white/50">patients selected</p>
+                      <p className="text-2xl font-bold" style={{ color: 'var(--teal-600)' }}>{selectedPatients.size}</p>
+                      <p className="text-xs text-slate-400">patients selected</p>
                     </div>
                   </div>
                 )}
@@ -899,11 +899,11 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
               {/* Nurse Selection Grid (when no nurse selected) */}
               {!selectedNurse && (
-                <div className="rounded-2xl p-5" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="rounded-2xl p-5" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-white">Select a Nurse to Assign Patients</h2>
+                    <h2 className="text-lg font-bold text-slate-900">Select a Nurse to Assign Patients</h2>
                     <select value={filterUnit} onChange={(e) => setFilterUnit(e.target.value)}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white focus:outline-none">
+                      className="text-xs px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-900 focus:outline-none focus:border-teal-500">
                       <option value="all">All Units</option>
                       {units.map(unit => <option key={unit} value={unit}>{unit}</option>)}
                     </select>
@@ -915,35 +915,35 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                         <motion.button key={nurse.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                           onClick={() => setSelectedNurse(nurse.id)}
                           className="p-4 rounded-xl text-left transition-all hover:ring-2 hover:ring-teal-500/50"
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                          style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-subtle)' }}>
                           <div className="flex items-start gap-3">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-bold">
                               {nurse.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm font-semibold text-white">{nurse.name}</p>
+                                <p className="text-sm font-semibold text-slate-900">{nurse.name}</p>
                                 <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[nurse.status].bg}`} />
                               </div>
-                              <p className="text-xs mt-0.5 text-white/40">{nurse.unit}</p>
+                              <p className="text-xs mt-0.5 text-slate-400">{nurse.unit}</p>
                               <div className="flex items-center gap-3 mt-2">
-                                <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)' }}>
+                                <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'var(--slate-100)', color: 'var(--slate-500)', border: '1px solid var(--border-subtle)' }}>
                                   {nursePatients.length}/{nurse.maxPatients} patients
                                 </span>
-                                <span className="text-xs text-white/40">{nurse.shift} Shift</span>
+                                <span className="text-xs text-slate-400">{nurse.shift} Shift</span>
                               </div>
                             </div>
                           </div>
                           {nursePatients.length > 0 && (
-                            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                              <p className="text-xs text-white/50 mb-1">Current patients:</p>
+                            <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                              <p className="text-xs text-slate-400 mb-1">Current patients:</p>
                               <div className="flex flex-wrap gap-1">
                                 {nursePatients.slice(0, 3).map(p => (
-                                  <span key={p.id} className="text-xs px-2 py-0.5 rounded bg-white/5 text-white/60">
+                                  <span key={p.id} className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
                                     {p.room}{p.bed}
                                   </span>
                                 ))}
-                                {nursePatients.length > 3 && <span className="text-xs text-white/40">+{nursePatients.length - 3} more</span>}
+                                {nursePatients.length > 3 && <span className="text-xs text-slate-400">+{nursePatients.length - 3} more</span>}
                               </div>
                             </div>
                           )}
@@ -956,15 +956,15 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
               {/* Patient Selection (when nurse is selected) */}
               {selectedNurse && (
-                <div className="rounded-2xl p-5" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="rounded-2xl p-5" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-white">Select Patients to Assign</h2>
+                    <h2 className="text-lg font-bold text-slate-900">Select Patients to Assign</h2>
                     <div className="flex items-center gap-3">
                       <input type="text" placeholder="Search patients..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                        className="text-sm px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 w-64" />
+                        className="input text-sm w-64" />
                       <button onClick={() => setSelectedPatients(selectedPatients.size === filteredPatients.length ? new Set() : new Set(filteredPatients.map(p => p.id)))}
-                        className="px-3 py-2 rounded-xl text-xs font-medium text-white/70 hover:text-white transition-all"
-                        style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        className="px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:text-slate-900 transition-all"
+                        style={{ background: 'var(--slate-100)', border: '1px solid var(--border-subtle)' }}>
                         {selectedPatients.size === filteredPatients.length ? 'Deselect All' : 'Select All'}
                       </button>
                     </div>
@@ -972,7 +972,7 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="text-left text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                        <tr className="text-left text-xs font-medium" style={{ color: 'var(--slate-400)' }}>
                           <th className="pb-3 pl-2 w-12">
                             <input type="checkbox"
                               checked={selectedPatients.size === filteredPatients.length && filteredPatients.length > 0}
@@ -996,30 +996,30 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                           return (
                             <tr key={patient.id} 
                               onClick={() => togglePatientSelection(patient.id)}
-                              className={`border-t border-white/5 cursor-pointer transition-all ${isSelected ? 'bg-teal-500/15' : 'hover:bg-white/5'}`}>
+                              className={`border-t cursor-pointer transition-all ${isSelected ? 'bg-teal-50' : 'hover:bg-slate-50'}`} style={{ borderColor: 'var(--border-subtle)' }}>
                               <td className="py-3 pl-2">
                                 <input type="checkbox" checked={isSelected} onChange={() => {}} className="w-4 h-4 rounded pointer-events-none" />
                               </td>
-                              <td className="py-3"><span className="text-sm font-mono font-semibold text-white">{patient.room}{patient.bed}</span></td>
+                              <td className="py-3"><span className="text-sm font-mono font-semibold text-slate-900">{patient.room}{patient.bed}</span></td>
                               <td className="py-3">
-                                <p className="text-sm font-semibold text-white">{patient.first_name} {patient.last_name}</p>
-                                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>MRN: {patient.mrn}</p>
+                                <p className="text-sm font-semibold text-slate-900">{patient.first_name} {patient.last_name}</p>
+                                <p className="text-xs" style={{ color: 'var(--slate-400)' }}>MRN: {patient.mrn}</p>
                               </td>
-                              <td className="py-3 text-sm text-white">{patient.age}y</td>
-                              <td className="py-3 text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{patient.diagnosis}</td>
+                              <td className="py-3 text-sm text-slate-700">{patient.age}y</td>
+                              <td className="py-3 text-sm text-slate-700">{patient.diagnosis}</td>
                               <td className="py-3">
                                 <span className={`text-xs px-2 py-1 rounded-full ${acuityStyle.bg} ${acuityStyle.text} ${acuityStyle.border} border`}>{patient.acuity}</span>
                               </td>
                               <td className="py-3">
                                 {assignedNurse ? (
-                                  <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(0,196,213,0.15)', color: '#00C4D5' }}>{assignedNurse.name.split(',')[0]}</span>
+                                  <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'var(--teal-50)', color: 'var(--teal-700)' }}>{assignedNurse.name.split(',')[0]}</span>
                                 ) : (
-                                  <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(255,165,0,0.15)', color: '#FFA500' }}>Unassigned</span>
+                                  <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'var(--warning-bg)', color: 'var(--warning-text)' }}>Unassigned</span>
                                 )}
                               </td>
                               <td className="py-3" onClick={e => e.stopPropagation()}>
                                 <div className="flex items-center gap-2">
-                                  <Link href={`/ehr/${patient.id}`} className="text-xs px-2 py-1 rounded-lg hover:bg-white/10" style={{ color: '#00C4D5' }}>View EHR</Link>
+                                  <Link href={`/ehr/${patient.id}`} className="text-xs px-2 py-1 rounded-lg hover:bg-white/10" style={{ color: 'var(--teal-600)' }}>View EHR</Link>
                                   {assignedNurse && <button onClick={() => unassignPatient(patient.id)} className="text-xs px-2 py-1 rounded-lg hover:bg-red-500/20 text-red-400">Unassign</button>}
                                 </div>
                               </td>
@@ -1035,13 +1035,13 @@ Room: ${toolPatient.room}-${toolPatient.bed}
           ) : activeTab === 'my-patients' ? (
             <motion.div key="my-patients" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               {/* Nurse Selector for My Patients View */}
-              <div className="mb-6 rounded-2xl p-4" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="mb-6 rounded-2xl p-4" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-white">View Nurse's Patients</h2>
+                  <h2 className="text-lg font-bold text-slate-900">View Nurse's Patients</h2>
                   <select 
                     value={selectedNurse || ''}
                     onChange={(e) => setSelectedNurse(e.target.value || null)}
-                    className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-teal-500"
+                    className="input text-sm"
                   >
                     <option value="">Select a Nurse</option>
                     {nurses.map(nurse => (
@@ -1053,18 +1053,18 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
               {/* Selected Nurse's Patient List */}
               {selectedNurse ? (
-                <div className="rounded-2xl p-5" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="flex items-center gap-4 mb-6 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-white font-bold text-lg">
+                <div className="rounded-2xl p-5" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
+                  <div className="flex items-center gap-4 mb-6 pb-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-slate-900 font-bold text-lg">
                       {nurses.find(n => n.id === selectedNurse)?.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-white">{nurses.find(n => n.id === selectedNurse)?.name}</h3>
-                      <p className="text-sm text-white/50">{nurses.find(n => n.id === selectedNurse)?.unit} • {nurses.find(n => n.id === selectedNurse)?.shift} Shift</p>
+                      <h3 className="text-xl font-bold text-slate-900">{nurses.find(n => n.id === selectedNurse)?.name}</h3>
+                      <p className="text-sm text-slate-400">{nurses.find(n => n.id === selectedNurse)?.unit} • {nurses.find(n => n.id === selectedNurse)?.shift} Shift</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold" style={{ color: '#00C4D5' }}>{getNursePatients(selectedNurse).length}</p>
-                      <p className="text-xs text-white/50">assigned patients</p>
+                      <p className="text-3xl font-bold" style={{ color: 'var(--teal-600)' }}>{getNursePatients(selectedNurse).length}</p>
+                      <p className="text-xs text-slate-400">assigned patients</p>
                     </div>
                   </div>
 
@@ -1077,7 +1077,7 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                         const priorityStyle = doctorNote ? getPriorityStyle(doctorNote.priority) : null;
                         return (
                           <div key={patient.id} className="rounded-xl transition-all"
-                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            style={{ background: 'var(--surface-raised)', border: '1px solid var(--border-subtle)' }}>
                             {/* Patient Header */}
                             <div className="p-4">
                               <div className="flex items-start justify-between mb-3">
@@ -1086,9 +1086,9 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                                     {patient.room}{patient.bed}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-semibold text-white">{patient.first_name} {patient.last_name}</p>
-                                    <p className="text-xs text-white/40">MRN: {patient.mrn} • {patient.age}y {patient.gender}</p>
-                                    <p className="text-xs text-white/60 mt-0.5">{patient.diagnosis}</p>
+                                    <p className="text-sm font-semibold text-slate-900">{patient.first_name} {patient.last_name}</p>
+                                    <p className="text-xs text-slate-400">MRN: {patient.mrn} • {patient.age}y {patient.gender}</p>
+                                    <p className="text-xs text-slate-500 mt-0.5">{patient.diagnosis}</p>
                                   </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-1">
@@ -1106,21 +1106,21 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                               {/* Doctor's Note Preview/Toggle */}
                               {doctorNote && (
                                 <button onClick={() => toggleNoteExpanded(patient.id)}
-                                  className="w-full mt-2 p-3 rounded-lg text-left transition-all hover:bg-white/5"
-                                  style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                                  className="w-full mt-2 p-3 rounded-lg text-left transition-all hover:bg-slate-100"
+                                  style={{ background: '#F5F3FF', border: '1px solid #DDD6FE' }}>
                                   <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-purple-400">📝</span>
-                                      <span className="text-xs font-semibold text-purple-300">Doctor's Orders</span>
+                                      <span className="text-purple-600">📝</span>
+                                      <span className="text-xs font-semibold text-purple-700">Doctor's Orders</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <span className="text-xs text-white/40">{doctorNote.doctorName}</span>
-                                      <svg className={`w-4 h-4 text-purple-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <span className="text-xs text-slate-400">{doctorNote.doctorName}</span>
+                                      <svg className={`w-4 h-4 text-purple-600 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                       </svg>
                                     </div>
                                   </div>
-                                  <p className="text-xs text-white/60 line-clamp-2">{doctorNote.planOfCare}</p>
+                                  <p className="text-xs text-slate-500 line-clamp-2">{doctorNote.planOfCare}</p>
                                 </button>
                               )}
                             </div>
@@ -1134,19 +1134,19 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                                   exit={{ height: 0, opacity: 0 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid rgba(139,92,246,0.2)' }}>
+                                  <div className="px-4 pb-4 space-y-3" style={{ borderTop: '1px solid #DDD6FE' }}>
                                     {/* Plan of Care */}
                                     <div className="pt-3">
-                                      <p className="text-xs font-semibold text-purple-300 mb-1">📋 Plan of Care</p>
-                                      <p className="text-sm text-white/80">{doctorNote.planOfCare}</p>
+                                      <p className="text-xs font-semibold text-purple-700 mb-1">📋 Plan of Care</p>
+                                      <p className="text-sm text-slate-700">{doctorNote.planOfCare}</p>
                                     </div>
 
                                     {/* Recommendations */}
                                     <div>
-                                      <p className="text-xs font-semibold text-green-400 mb-1">✅ Recommendations</p>
+                                      <p className="text-xs font-semibold text-green-700 mb-1">✅ Recommendations</p>
                                       <ul className="space-y-1">
                                         {doctorNote.recommendations.map((rec, i) => (
-                                          <li key={i} className="text-xs text-white/70 flex items-start gap-2">
+                                          <li key={i} className="text-xs text-slate-600 flex items-start gap-2">
                                             <span className="text-green-500 mt-0.5">•</span>
                                             {rec}
                                           </li>
@@ -1156,10 +1156,10 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
                                     {/* Monitoring */}
                                     <div>
-                                      <p className="text-xs font-semibold text-amber-400 mb-1">👁️ Monitoring</p>
+                                      <p className="text-xs font-semibold text-amber-700 mb-1">👁️ Monitoring</p>
                                       <ul className="space-y-1">
                                         {doctorNote.monitoring.map((mon, i) => (
-                                          <li key={i} className="text-xs text-white/70 flex items-start gap-2">
+                                          <li key={i} className="text-xs text-slate-600 flex items-start gap-2">
                                             <span className="text-amber-500 mt-0.5">•</span>
                                             {mon}
                                           </li>
@@ -1168,9 +1168,9 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                                     </div>
 
                                     {/* Note Footer */}
-                                    <div className="pt-2 flex items-center justify-between text-xs text-white/40" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                    <div className="pt-2 flex items-center justify-between text-xs text-slate-400" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                                       <span>Last updated: {doctorNote.dateTime}</span>
-                                      <span className="text-purple-400">{doctorNote.doctorName}</span>
+                                      <span className="text-purple-600">{doctorNote.doctorName}</span>
                                     </div>
                                   </div>
                                 </motion.div>
@@ -1180,17 +1180,17 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                             {/* Nurse Notes for Doctor */}
                             {getPatientNurseNotes(patient.id).length > 0 && (
                               <div className="px-4 pb-3">
-                                <p className="text-xs font-semibold text-cyan-400 mb-2">📝 Your Notes for Doctor ({getPatientNurseNotes(patient.id).length})</p>
+                                <p className="text-xs font-semibold text-cyan-700 mb-2">📝 Your Notes for Doctor ({getPatientNurseNotes(patient.id).length})</p>
                                 <div className="space-y-2 max-h-32 overflow-y-auto">
                                   {getPatientNurseNotes(patient.id).slice(0, 2).map(note => {
                                     const urgStyle = getNoteUrgencyStyle(note.urgency);
                                     return (
-                                      <div key={note.id} className="p-2 rounded-lg text-xs" style={{ background: 'rgba(0,196,213,0.08)', border: '1px solid rgba(0,196,213,0.2)' }}>
+                                      <div key={note.id} className="p-2 rounded-lg text-xs" style={{ background: 'var(--teal-50)', border: '1px solid var(--teal-100)' }}>
                                         <div className="flex items-center justify-between mb-1">
                                           <span className={`px-1.5 py-0.5 rounded text-[10px] ${urgStyle.bg} ${urgStyle.text}`}>{urgStyle.label}</span>
-                                          <span className="text-white/40 text-[10px]">{note.status}</span>
+                                          <span className="text-slate-400 text-[10px]">{note.status}</span>
                                         </div>
-                                        <p className="text-white/70 line-clamp-2">{note.note}</p>
+                                        <p className="text-slate-600 line-clamp-2">{note.note}</p>
                                       </div>
                                     );
                                   })}
@@ -1199,20 +1199,20 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                             )}
 
                             {/* Action Buttons */}
-                            <div className="flex gap-2 p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div className="flex gap-2 p-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                               <Link href={`/ehr/${patient.id}`} 
                                 className="flex-1 py-2 rounded-lg text-center text-xs font-medium transition-all hover:bg-teal-500/20"
-                                style={{ background: 'rgba(0,196,213,0.1)', color: '#00C4D5' }}>
+                                style={{ background: 'var(--teal-50)', color: 'var(--teal-700)' }}>
                                 View EHR
                               </Link>
                               <button onClick={() => openNoteModal(patient.id)}
-                                className="flex-1 py-2 rounded-lg text-center text-xs font-medium text-amber-400 transition-all hover:bg-amber-500/20"
-                                style={{ background: 'rgba(245,158,11,0.1)' }}>
+                                className="flex-1 py-2 rounded-lg text-center text-xs font-medium text-amber-700 transition-all hover:bg-amber-100"
+                                style={{ background: 'var(--warning-bg)' }}>
                                 📝 Note for Dr.
                               </button>
                               <button onClick={() => unassignPatient(patient.id)}
                                 className="py-2 px-3 rounded-lg text-center text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
-                                style={{ background: 'rgba(239,68,68,0.1)' }}>
+                                style={{ background: 'var(--danger-bg)' }}>
                                 ✕
                               </button>
                             </div>
@@ -1222,12 +1222,12 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 text-center">
-                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                        <svg className="w-8 h-8 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                        <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                       </div>
-                      <p className="text-white/50 mb-2">No patients assigned</p>
+                      <p className="text-slate-400 mb-2">No patients assigned</p>
                       <button onClick={() => setActiveTab('dashboard')}
                         className="px-4 py-2 rounded-xl text-sm font-medium text-teal-400 hover:bg-teal-500/10 transition-all">
                         Go to Assign Tab →
@@ -1236,21 +1236,21 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                   )}
                 </div>
               ) : (
-                <div className="rounded-2xl p-12 text-center" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-10 h-10 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="rounded-2xl p-12 text-center" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
+                  <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">Select a Nurse</h3>
-                  <p className="text-sm text-white/50 mb-4">Choose a nurse from the dropdown above to view their assigned patients</p>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">Select a Nurse</h3>
+                  <p className="text-sm text-slate-400 mb-4">Choose a nurse from the dropdown above to view their assigned patients</p>
                   
                   {/* Quick Nurse Buttons */}
                   <div className="flex flex-wrap justify-center gap-2 mt-6">
                     {nurses.map(nurse => (
                       <button key={nurse.id} onClick={() => setSelectedNurse(nurse.id)}
-                        className="px-4 py-2 rounded-xl text-sm font-medium text-white/70 hover:text-white transition-all hover:ring-1 hover:ring-teal-500/50"
-                        style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:text-slate-900 transition-all hover:ring-1 hover:ring-teal-500/50"
+                        style={{ background: 'var(--slate-100)', border: '1px solid var(--border-subtle)' }}>
                         {nurse.name.split(',')[0]} ({getNursePatients(nurse.id).length})
                       </button>
                     ))}
@@ -1261,14 +1261,14 @@ Room: ${toolPatient.room}-${toolPatient.bed}
           ) : (
             <motion.div key="tools" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               {/* Patient Selector for Tools */}
-              <div className="mb-6 rounded-2xl p-4" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="mb-6 rounded-2xl p-4" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-white/50 text-sm font-medium">Patient:</span>
+                    <span className="text-slate-400 text-sm font-medium">Patient:</span>
                     <select
                       value={toolPatientId || ''}
                       onChange={(e) => setToolPatientId(e.target.value || null)}
-                      className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-teal-500 focus:outline-none min-w-[250px]"
+                      className="px-4 py-2 input text-sm min-w-[250px]"
                     >
                       <option value="">-- Select a patient --</option>
                       {patients.map(p => (
@@ -1280,24 +1280,24 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                   </div>
                   {toolPatient && (
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'rgba(0,196,213,0.1)' }}>
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: 'var(--teal-50)', border: '1px solid var(--teal-100)' }}>
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${toolPatient.gender === 'Female' ? 'bg-pink-500' : 'bg-blue-500'}`}>
                           {toolPatient.first_name[0]}{toolPatient.last_name[0]}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-white">{toolPatient.first_name} {toolPatient.last_name}</p>
-                          <p className="text-xs text-white/50">MRN: {toolPatient.mrn} | {toolPatient.diagnosis}</p>
+                          <p className="text-sm font-semibold text-slate-900">{toolPatient.first_name} {toolPatient.last_name}</p>
+                          <p className="text-xs text-slate-400">MRN: {toolPatient.mrn} | {toolPatient.diagnosis}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-white/40">Room</p>
-                        <p className="text-lg font-bold text-teal-400">{toolPatient.room}-{toolPatient.bed}</p>
+                        <p className="text-xs text-slate-400">Room</p>
+                        <p className="text-lg font-bold" style={{ color: 'var(--teal-600)' }}>{toolPatient.room}-{toolPatient.bed}</p>
                       </div>
                     </div>
                   )}
                 </div>
                 {!toolPatientId && (
-                  <p className="mt-3 text-xs text-amber-400/80 flex items-center gap-2">
+                  <p className="mt-3 text-xs text-amber-700 flex items-center gap-2">
                     <span>⚠️</span> Please select a patient before using clinical tools
                   </p>
                 )}
@@ -1305,18 +1305,18 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
               {/* Tool Cards Grid */}
               <div className="mb-6">
-                <h2 className="text-lg font-bold text-white mb-4">Clinical Tools</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Clinical Tools</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {NURSE_TOOLS.map(tool => (
                     <motion.button key={tool.id} whileHover={{ y: -2 }}
                       onClick={() => setActiveTool(tool.id as ActiveTool)}
                       className={`p-4 rounded-2xl text-left transition-all ${activeTool === tool.id ? 'ring-2 ring-teal-500' : ''}`}
-                      style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                       <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center mb-3`}>
                         <span className="text-xl">{tool.icon}</span>
                       </div>
-                      <p className="text-sm font-bold text-white mb-0.5">{tool.title}</p>
-                      <p className="text-xs text-white/40">{tool.desc}</p>
+                      <p className="text-sm font-bold text-slate-900 mb-0.5">{tool.title}</p>
+                      <p className="text-xs text-slate-400">{tool.desc}</p>
                     </motion.button>
                   ))}
                 </div>
@@ -1324,40 +1324,40 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
               {/* Tool Content + Results */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="rounded-2xl p-6" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="rounded-2xl p-6" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-bold text-white">{NURSE_TOOLS.find(t => t.id === activeTool)?.title || 'Select a Tool'}</h3>
+                    <h3 className="text-base font-bold text-slate-900">{NURSE_TOOLS.find(t => t.id === activeTool)?.title || 'Select a Tool'}</h3>
                     {toolPatient && (
-                      <span className="text-xs px-2 py-1 rounded-lg bg-teal-500/20 text-teal-400">
+                      <span className="text-xs px-2 py-1 rounded-lg" style={{ background: 'var(--teal-50)', color: 'var(--teal-700)' }}>
                         For: {toolPatient.first_name} {toolPatient.last_name}
                       </span>
                     )}
                   </div>
                   {!toolPatientId && activeTool ? (
                     <div className="flex flex-col items-center justify-center py-8 text-center">
-                      <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center mb-3">
+                      <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-3">
                         <span className="text-2xl">👤</span>
                       </div>
-                      <p className="text-amber-400 text-sm font-medium mb-1">No Patient Selected</p>
-                      <p className="text-white/40 text-xs">Select a patient above to use this tool</p>
+                      <p className="text-amber-700 text-sm font-medium mb-1">No Patient Selected</p>
+                      <p className="text-slate-400 text-xs">Select a patient above to use this tool</p>
                     </div>
                   ) : (
                     renderToolContent()
                   )}
                 </div>
-                <div className="rounded-2xl p-6" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="rounded-2xl p-6" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-bold text-white">Results</h3>
+                    <h3 className="text-base font-bold text-slate-900">Results</h3>
                     {result && toolPatient && (
-                      <span className="text-xs text-white/40">
+                      <span className="text-xs text-slate-400">
                         Patient: {toolPatient.first_name} {toolPatient.last_name} | Room {toolPatient.room}-{toolPatient.bed}
                       </span>
                     )}
                   </div>
                   {result ? (
-                    <pre className="whitespace-pre-wrap text-sm text-white/80 font-sans bg-white/5 p-4 rounded-xl">{result}</pre>
+                    <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans bg-slate-100 p-4 rounded-xl">{result}</pre>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-48 text-white/30">
+                    <div className="flex flex-col items-center justify-center h-48 text-slate-300">
                       <p className="text-sm">Results will appear here</p>
                     </div>
                   )}
@@ -1366,12 +1366,12 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
               {/* Quick Reference */}
               <div className="mt-6">
-                <h2 className="text-lg font-bold text-white mb-4">Quick Reference</h2>
+                <h2 className="text-lg font-bold text-slate-900 mb-4">Quick Reference</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="rounded-xl p-4" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <h4 className="font-bold text-white mb-2">🧒 Pediatric Vital Signs</h4>
-                    <table className="w-full text-xs text-white/70">
-                      <thead><tr className="text-white/40"><th className="text-left py-1">Age</th><th>HR</th><th>RR</th><th>BP</th></tr></thead>
+                  <div className="rounded-xl p-4" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
+                    <h4 className="font-bold text-slate-900 mb-2">🧒 Pediatric Vital Signs</h4>
+                    <table className="w-full text-xs text-slate-600">
+                      <thead><tr className="text-slate-400"><th className="text-left py-1">Age</th><th>HR</th><th>RR</th><th>BP</th></tr></thead>
                       <tbody>
                         <tr><td>Newborn</td><td>120-160</td><td>30-60</td><td>60-90</td></tr>
                         <tr><td>Infant</td><td>100-150</td><td>25-40</td><td>80-100</td></tr>
@@ -1380,18 +1380,18 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                       </tbody>
                     </table>
                   </div>
-                  <div className="rounded-xl p-4" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <h4 className="font-bold text-white mb-2">💉 Common IV Rates</h4>
-                    <ul className="text-xs text-white/70 space-y-1">
+                  <div className="rounded-xl p-4" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
+                    <h4 className="font-bold text-slate-900 mb-2">💉 Common IV Rates</h4>
+                    <ul className="text-xs text-slate-600 space-y-1">
                       <li>• <strong>Maintenance:</strong> 4-2-1 rule</li>
                       <li>• <strong>Bolus:</strong> 20 mL/kg over 20-60 min</li>
                       <li>• <strong>Blood:</strong> 10-15 mL/kg over 2-4 hr</li>
                       <li>• <strong>Micro drip:</strong> 60 gtt/mL for peds</li>
                     </ul>
                   </div>
-                  <div className="rounded-xl p-4" style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <h4 className="font-bold text-white mb-2">⚠️ Critical Values</h4>
-                    <ul className="text-xs text-white/70 space-y-1">
+                  <div className="rounded-xl p-4" style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}>
+                    <h4 className="font-bold text-slate-900 mb-2">⚠️ Critical Values</h4>
+                    <ul className="text-xs text-slate-600 space-y-1">
                       <li>• <strong>K+:</strong> &lt;2.5 or &gt;6.5 mEq/L</li>
                       <li>• <strong>Glucose:</strong> &lt;40 or &gt;400 mg/dL</li>
                       <li>• <strong>Hgb:</strong> &lt;7 g/dL</li>
@@ -1412,7 +1412,7 @@ Room: ${toolPatient.room}-${toolPatient.bed}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              style={{ background: 'rgba(0,0,0,0.8)' }}
+              style={{ background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(4px)' }}
               onClick={() => setShowNoteModal(false)}
             >
               <motion.div
@@ -1420,18 +1420,18 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 className="w-full max-w-lg rounded-2xl overflow-hidden"
-                style={{ background: '#161B22', border: '1px solid rgba(255,255,255,0.1)' }}
+                style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}
                 onClick={e => e.stopPropagation()}
               >
                 {/* Modal Header */}
-                <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="p-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <div>
-                    <h3 className="text-lg font-bold text-white">📝 Note for Doctor</h3>
-                    <p className="text-xs text-white/50">
+                    <h3 className="text-lg font-bold text-slate-900">📝 Note for Doctor</h3>
+                    <p className="text-xs text-slate-400">
                       Patient: {patients.find(p => p.id === notePatientId)?.first_name} {patients.find(p => p.id === notePatientId)?.last_name}
                     </p>
                   </div>
-                  <button onClick={() => setShowNoteModal(false)} className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white">
+                  <button onClick={() => setShowNoteModal(false)} className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -1442,17 +1442,17 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                 <div className="p-4 space-y-4">
                   {/* Category Selection */}
                   <div>
-                    <label className="text-xs font-semibold text-white/70 mb-2 block">Category</label>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Category</label>
                     <div className="grid grid-cols-3 gap-2">
                       {NOTE_CATEGORIES.map(cat => (
                         <button
                           key={cat.id}
                           onClick={() => setNoteCategory(cat.id as NurseNote['category'])}
                           className={`p-2 rounded-lg text-xs text-left transition-all ${noteCategory === cat.id ? 'ring-2 ring-teal-500' : ''}`}
-                          style={{ background: noteCategory === cat.id ? 'rgba(0,196,213,0.15)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                          style={{ background: noteCategory === cat.id ? 'var(--teal-50)' : 'var(--slate-50)', border: `1px solid ${noteCategory === cat.id ? 'var(--teal-100)' : 'var(--border-subtle)'}` }}
                         >
                           <span className="block">{cat.label}</span>
-                          <span className="text-[10px] text-white/40">{cat.desc}</span>
+                          <span className="text-[10px] text-slate-400">{cat.desc}</span>
                         </button>
                       ))}
                     </div>
@@ -1460,7 +1460,7 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
                   {/* Urgency Selection */}
                   <div>
-                    <label className="text-xs font-semibold text-white/70 mb-2 block">Urgency Level</label>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Urgency Level</label>
                     <div className="flex gap-2">
                       {[
                         { id: 'routine', label: '📝 Routine', color: 'green' },
@@ -1470,8 +1470,8 @@ Room: ${toolPatient.room}-${toolPatient.bed}
                         <button
                           key={urg.id}
                           onClick={() => setNoteUrgency(urg.id as NurseNote['urgency'])}
-                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${noteUrgency === urg.id ? `ring-2 ring-${urg.color}-500 bg-${urg.color}-500/20 text-${urg.color}-400` : 'text-white/60'}`}
-                          style={{ background: noteUrgency === urg.id ? undefined : 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+                          className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${noteUrgency === urg.id ? `ring-2 ring-${urg.color}-500 bg-${urg.color}-500/20 text-${urg.color}-400` : 'text-slate-500'}`}
+                          style={{ background: noteUrgency === urg.id ? undefined : 'var(--slate-50)', border: `1px solid ${noteUrgency === urg.id ? 'transparent' : 'var(--border-subtle)'}` }}
                         >
                           {urg.label}
                         </button>
@@ -1481,22 +1481,22 @@ Room: ${toolPatient.room}-${toolPatient.bed}
 
                   {/* Note Text */}
                   <div>
-                    <label className="text-xs font-semibold text-white/70 mb-2 block">Note Details</label>
+                    <label className="text-xs font-semibold text-slate-600 mb-2 block">Note Details</label>
                     <textarea
                       value={noteText}
                       onChange={e => setNoteText(e.target.value)}
                       placeholder="Describe the issue or concern that needs doctor's attention..."
                       rows={4}
                       className="w-full p-3 rounded-xl text-sm outline-none resize-none"
-                      style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                      style={{ background: 'var(--slate-50)', border: '1px solid var(--border-subtle)', color: 'var(--slate-900)' }}
                     />
                   </div>
                 </div>
 
                 {/* Modal Footer */}
-                <div className="p-4 flex gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                <div className="p-4 flex gap-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                   <button onClick={() => setShowNoteModal(false)}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                    className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all">
                     Cancel
                   </button>
                   <button

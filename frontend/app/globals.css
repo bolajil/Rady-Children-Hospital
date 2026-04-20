@@ -4,186 +4,319 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-fraunces);
+  --font-mono: var(--font-dm-mono);
 }
 
-/* ─── Design Tokens ─────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────
+   DESIGN TOKENS — Light Professional Healthcare
+   Inspired by 21st.dev precision + warm pediatric care
+   ──────────────────────────────────────────────────────────── */
 :root {
-  --background: #0D1117;
-  --foreground: #E2E8F0;
+  /* Canvas */
+  --background:      #F7F6F4;   /* warm bone — not cold white */
+  --foreground:      #0F172A;
 
-  /* Brand */
-  --rady-teal:        #00A0AF;
-  --rady-teal-light:  #00C4D5;
-  --rady-teal-dark:   #007A87;
+  /* Brand teal (Rady) */
+  --teal-900:        #134E4A;
+  --teal-700:        #0F766E;
+  --teal-600:        #0D9488;
+  --teal-500:        #14B8A6;
+  --teal-400:        #2DD4BF;
+  --teal-100:        #CCFBF1;
+  --teal-50:         #F0FDFA;
 
-  /* Dark surfaces */
-  --surface-1: #161B22;      /* base card */
-  --surface-2: #1C2333;      /* elevated card */
-  --surface-3: #21262D;      /* input bg */
-  --surface-border: rgba(255,255,255,0.09);
-  --surface-border-strong: rgba(255,255,255,0.15);
+  /* Warm amber accent (nano-banana warmth) */
+  --amber-500:       #F59E0B;
+  --amber-400:       #FBBF24;
+  --amber-100:       #FEF3C7;
+  --amber-50:        #FFFBEB;
+
+  /* Slate neutrals */
+  --slate-950:       #020617;
+  --slate-900:       #0F172A;
+  --slate-800:       #1E293B;
+  --slate-700:       #334155;
+  --slate-600:       #475569;
+  --slate-500:       #64748B;
+  --slate-400:       #94A3B8;
+  --slate-300:       #CBD5E1;
+  --slate-200:       #E2E8F0;
+  --slate-100:       #F1F5F9;
+  --slate-50:        #F8FAFC;
+
+  /* Semantic status */
+  --success-bg:      #F0FDF4;
+  --success-text:    #166534;
+  --success-border:  #BBF7D0;
+  --warning-bg:      #FFFBEB;
+  --warning-text:    #92400E;
+  --warning-border:  #FDE68A;
+  --danger-bg:       #FFF1F2;
+  --danger-text:     #9F1239;
+  --danger-border:   #FECDD3;
+  --info-bg:         #EFF6FF;
+  --info-text:       #1D4ED8;
+  --info-border:     #BFDBFE;
+
+  /* Surfaces */
+  --surface-base:    #FFFFFF;
+  --surface-raised:  #FAFAF9;
+  --surface-overlay: rgba(255,255,255,0.85);
+
+  /* Borders */
+  --border-subtle:   #E8E7E5;
+  --border-default:  #D4D3D0;
+  --border-strong:   #A9A7A3;
 
   /* Sidebar */
-  --sb-bg:            #0D1117;
-  --sb-surface:       rgba(255,255,255,0.055);
-  --sb-border:        rgba(255,255,255,0.08);
-  --sb-text:          rgba(255,255,255,0.78);
-  --sb-muted:         rgba(255,255,255,0.36);
-  --sb-active-bg:     rgba(0,160,175,0.16);
-  --sb-active-accent: #00C4D5;
-  --sb-hover-bg:      rgba(255,255,255,0.06);
+  --sb-bg:           #FFFFFF;
+  --sb-border:       #ECEAE8;
+  --sb-text:         #374151;
+  --sb-muted:        #9CA3AF;
+  --sb-active-bg:    #F0FDFA;
+  --sb-active-text:  #0D9488;
+  --sb-active-border:#14B8A6;
+  --sb-hover-bg:     #F9F8F7;
+  --sb-group-label:  #9CA3AF;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 4px rgba(0,0,0,0.30);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.40);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.55);
-  --shadow-glow-teal: 0 0 24px rgba(0,160,175,0.40);
+  /* Shadows — softer, warmer */
+  --shadow-xs:  0 1px 2px rgba(15,23,42,0.04);
+  --shadow-sm:  0 1px 4px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-md:  0 4px 12px rgba(15,23,42,0.08), 0 2px 4px rgba(15,23,42,0.04);
+  --shadow-lg:  0 12px 32px rgba(15,23,42,0.10), 0 4px 8px rgba(15,23,42,0.05);
+  --shadow-xl:  0 24px 48px rgba(15,23,42,0.12), 0 8px 16px rgba(15,23,42,0.06);
+  --shadow-teal: 0 4px 16px rgba(13,148,136,0.20), 0 1px 4px rgba(13,148,136,0.12);
+
+  /* Radius */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  18px;
+  --radius-2xl: 24px;
 }
 
-/* ─── Base ───────────────────────────────────────────────────── */
+/* ─── Reset & Base ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans, 'Inter', system-ui, sans-serif);
+  font-family: var(--font-dm-sans, 'DM Sans', system-ui, sans-serif);
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────── */
-::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar        { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: rgba(255,255,255,0.12); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+::-webkit-scrollbar-thumb  { background: var(--slate-300); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--slate-400); }
 
 /* ─── Focus ring ─────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--rady-teal);
+  outline: 2px solid var(--teal-500);
   outline-offset: 2px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   DARK-MODE OVERRIDES FOR CONTENT AREA
-   All pages use Tailwind light classes (bg-white, bg-gray-50…).
-   We override them inside <main> so existing pages go dark
-   without requiring a rewrite of every component.
-   ──────────────────────────────────────────────────────────── */
-
-/* Background overrides */
-main, main .min-h-screen { background-color: #0D1117; }
-
-main .bg-white           { background-color: var(--surface-1) !important; }
-main .bg-gray-50         { background-color: #111827 !important; }
-main .bg-gray-100        { background-color: var(--surface-2) !important; }
-
-/* Input / form surfaces */
-main input,
-main textarea,
-main select {
-  background-color: var(--surface-3) !important;
-  color: #E2E8F0 !important;
-  border-color: var(--surface-border) !important;
-}
-main input::placeholder,
-main textarea::placeholder { color: rgba(148,163,184,0.5) !important; }
-main input:focus,
-main textarea:focus,
-main select:focus {
-  border-color: var(--rady-teal) !important;
-  box-shadow: 0 0 0 3px rgba(0,160,175,0.20) !important;
-  outline: none !important;
+/* ─── Typography helpers ─────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-fraunces, 'Fraunces', Georgia, serif);
 }
 
-/* Text overrides */
-main .text-gray-900 { color: #F1F5F9 !important; }
-main .text-gray-800 { color: #E2E8F0 !important; }
-main .text-gray-700 { color: #CBD5E1 !important; }
-main .text-gray-600 { color: #94A3B8 !important; }
-main .text-gray-500 { color: #64748B !important; }
-main .text-gray-400 { color: #475569 !important; }
-
-/* Border overrides */
-main .border-gray-100 { border-color: rgba(255,255,255,0.06) !important; }
-main .border-gray-200 { border-color: var(--surface-border) !important; }
-main .border-gray-300 { border-color: var(--surface-border-strong) !important; }
-
-/* Shadow overrides */
-main .shadow-sm  { box-shadow: 0 1px 4px rgba(0,0,0,0.35) !important; }
-main .shadow-md  { box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important; }
-main .shadow-xl  { box-shadow: 0 10px 36px rgba(0,0,0,0.55) !important; }
-main .shadow-2xl { box-shadow: 0 24px 64px rgba(0,0,0,0.60) !important; }
-
-/* Hover states for cards inside main */
-main .hover\:bg-gray-50:hover  { background-color: rgba(255,255,255,0.05) !important; }
-main .hover\:bg-gray-100:hover { background-color: rgba(255,255,255,0.07) !important; }
-main .hover\:shadow-xl:hover   { box-shadow: 0 12px 40px rgba(0,0,0,0.55) !important; }
-
-/* Hover border accent */
-main .hover\:border-blue-500:hover { border-color: var(--rady-teal) !important; }
-
-/* Status badge backgrounds — keep colors, just dim slightly */
-main .bg-green-50  { background-color: rgba(16,185,129,0.12) !important; }
-main .bg-green-100 { background-color: rgba(16,185,129,0.16) !important; }
-main .bg-blue-50   { background-color: rgba(37,99,235,0.14) !important; }
-main .bg-blue-100  { background-color: rgba(37,99,235,0.18) !important; }
-main .bg-red-50    { background-color: rgba(239,68,68,0.12) !important; }
-main .bg-red-100   { background-color: rgba(239,68,68,0.16) !important; }
-main .bg-yellow-50 { background-color: rgba(245,158,11,0.12) !important; }
-main .bg-purple-50 { background-color: rgba(124,58,237,0.14) !important; }
-main .bg-gray-800  { background-color: var(--surface-2) !important; }
-
-/* Button surfaces */
-main .bg-blue-50.text-blue-600 { background-color: rgba(37,99,235,0.14) !important; }
-main .bg-green-50.text-green-600 { background-color: rgba(16,185,129,0.12) !important; }
-
-/* Dividers */
-main hr,
-main .divide-gray-200 > * + * { border-color: var(--surface-border) !important; }
-
-/* ─── Utility classes ─────────────────────────────────────────── */
-.text-gradient-brand {
-  background: linear-gradient(135deg, #00C4D5 0%, #2563EB 100%);
+/* ─── Utility: brand gradient text ──────────────────────────── */
+.text-gradient-teal {
+  background: linear-gradient(135deg, #0D9488 0%, #0891B2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.glass-dark {
-  background: rgba(22,27,34,0.85);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 16px;
+/* ─── Glass surface (light) ──────────────────────────────────── */
+.glass-light {
+  background: rgba(255,255,255,0.80);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.90);
 }
 
-/* ─── Sidebar nav transition ─────────────────────────────────── */
+/* ─── Card base ──────────────────────────────────────────────── */
+.card {
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-raised {
+  background: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── Status badges ──────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.badge-success { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+.badge-warning { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger-text);  border: 1px solid var(--danger-border); }
+.badge-info    { background: var(--info-bg);    color: var(--info-text);    border: 1px solid var(--info-border); }
+.badge-teal    { background: var(--teal-50);    color: var(--teal-700);     border: 1px solid var(--teal-100); }
+
+/* ─── Button system ──────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+.btn-primary {
+  background: var(--teal-600);
+  color: white;
+  box-shadow: var(--shadow-teal);
+}
+.btn-primary:hover { background: var(--teal-700); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(13,148,136,0.28); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary {
+  background: var(--surface-base);
+  color: var(--slate-700);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-xs);
+}
+.btn-secondary:hover { background: var(--slate-50); border-color: var(--border-strong); }
+
+/* ─── Input system ───────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--surface-base);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--slate-900);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+.input::placeholder { color: var(--slate-400); }
+.input:focus {
+  border-color: var(--teal-500);
+  box-shadow: 0 0 0 3px rgba(20,184,166,0.15);
+}
+
+/* ─── Nav item ───────────────────────────────────────────────── */
 .nav-item {
-  transition: background 0.16s ease, color 0.16s ease, transform 0.14s ease;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.12s ease;
   will-change: transform;
 }
-.nav-item:hover { transform: translateX(3px); }
+.nav-item:hover { transform: translateX(2px); }
 
-/* ─── Shimmer skeleton ───────────────────────────────────────── */
+/* ─── Page entry animation ───────────────────────────────────── */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: page-in 0.24s cubic-bezier(.22,1,.36,1) both; }
+
+/* ─── Stagger entrance ───────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger > * {
+  animation: fade-up 0.3s cubic-bezier(.22,1,.36,1) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 50ms; }
+.stagger > *:nth-child(3) { animation-delay: 100ms; }
+.stagger > *:nth-child(4) { animation-delay: 150ms; }
+.stagger > *:nth-child(5) { animation-delay: 200ms; }
+.stagger > *:nth-child(6) { animation-delay: 250ms; }
+
+/* ─── Shimmer skeleton (light) ───────────────────────────────── */
 @keyframes shimmer {
   from { background-position: -600px 0; }
   to   { background-position: 600px 0; }
 }
 .skeleton {
   background: linear-gradient(90deg,
-    rgba(255,255,255,0.03) 0%,
-    rgba(255,255,255,0.08) 50%,
-    rgba(255,255,255,0.03) 100%
+    #F1F0EE 0%,
+    #E8E7E4 50%,
+    #F1F0EE 100%
   );
   background-size: 600px 100%;
-  animation: shimmer 1.5s ease infinite;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
 }
 
-/* ─── Page entry animation ───────────────────────────────────── */
-@keyframes page-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* ─── Topographic pattern (used in login) ────────────────────── */
+.topo-pattern {
+  background-image:
+    repeating-radial-gradient(
+      circle at 60% 40%,
+      transparent 0,
+      transparent 38px,
+      rgba(13,148,136,0.06) 39px,
+      transparent 40px
+    ),
+    repeating-radial-gradient(
+      circle at 30% 70%,
+      transparent 0,
+      transparent 58px,
+      rgba(13,148,136,0.04) 59px,
+      transparent 60px
+    );
 }
-.page-enter { animation: page-in 0.28s cubic-bezier(.22,1,.36,1) both; }
+
+/* ─── Dot grid pattern ───────────────────────────────────────── */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(15,23,42,0.10) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ─── Hairline divider ───────────────────────────────────────── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TAILWIND LIGHT OVERRIDES — ensures legacy Tailwind dark classes
+   used in inner pages resolve to the correct light palette.
+   ──────────────────────────────────────────────────────────── */
+main .bg-gray-900   { background-color: var(--slate-800)  !important; }
+main .bg-gray-800   { background-color: var(--slate-100)  !important; }
+main .text-gray-900 { color: var(--slate-900) !important; }
+main .text-gray-800 { color: var(--slate-800) !important; }
+main .text-gray-700 { color: var(--slate-700) !important; }
+main .text-gray-600 { color: var(--slate-600) !important; }
+main .text-gray-500 { color: var(--slate-500) !important; }
+main .text-gray-400 { color: var(--slate-400) !important; }
+main .text-white    { color: var(--slate-900) !important; }

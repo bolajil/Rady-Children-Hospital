@@ -1,29 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lato } from "next/font/google";
+import { DM_Sans, Fraunces, DM_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "./components/Sidebar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
-const lato = Lato({
-  variable: "--font-lato",
+const dmMono = DM_Mono({
+  variable: "--font-dm-mono",
   subsets: ["latin"],
-  weight: ["400", "700", "900"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Rady GenAI - Medical Assistant",
-  description: "AI-powered medical assistant for Rady Children's Hospital",
+  title: "Rady GenAI — Clinical AI Assistant",
+  description: "AI-powered clinical assistant for Rady Children's Hospital",
   manifest: "/manifest.json",
-  themeColor: "#0D1117",
+  themeColor: "#F7F6F4",
   viewport: {
     width: "device-width",
     initialScale: 1,
@@ -35,28 +41,22 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
     title: "Rady GenAI",
   },
-  formatDetection: {
-    telephone: true,
-  },
-  other: {
-    "mobile-web-app-capable": "yes",
-  },
+  formatDetection: { telephone: true },
+  other: { "mobile-web-app-capable": "yes" },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} antialiased`}
+        className={`${dmSans.variable} ${fraunces.variable} ${dmMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen overflow-hidden" style={{ background: "var(--background)" }}>
           <Sidebar />
-          <main className="flex-1 overflow-y-auto pt-16 md:pt-0 page-enter">
+          <main className="flex-1 overflow-y-auto page-enter" style={{ background: "var(--background)" }}>
             {children}
           </main>
         </div>

@@ -11,7 +11,7 @@ function getBackendUrl() {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   // Local development - always use localhost
-  return 'http://127.0.0.1:8000';
+  return process.env.BACKEND_URL || 'http://127.0.0.1:8003';
 }
 
 export async function POST(request: Request) {
